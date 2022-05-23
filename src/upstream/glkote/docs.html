@@ -1,0 +1,1805 @@
+<!doctype HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>GlkOte: a Javascript library for IF interfaces</title>
+
+<style type="text/css">
+
+body {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+h2 {
+  font-family: Gill Sans, Helvetica, Arial, sans-serif;
+  font-weight: normal;
+}
+
+h3 {
+  font-family: Gill Sans, Helvetica, Arial, sans-serif;
+  font-weight: normal;
+}
+
+h4 {
+  font-family: Gill Sans, Helvetica, Arial, sans-serif;
+  font-weight: normal;
+}
+
+h2 a {
+  border-bottom: 1px dotted #AAA;
+}
+
+h3 a {
+  border-bottom: 1px dotted #AAA;
+}
+
+h4 a {
+  border-bottom: 1px dotted #AAA;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 24px;
+}
+
+li {
+  margin-top: 2px;
+}
+
+dt {
+  margin-top: 4px;
+}
+
+.ContentTop > li > a {
+  border-left: 2px solid #AAA;
+  padding-left: 8px;
+}
+
+.ContentTop > li > ul {
+  border-left: 2px dotted #DDD;
+}
+
+.Def {
+  margin-left: 4px;
+  background: #D0F8D4;
+  border-left: 4px solid #98E0A0;
+  padding: 4px 0px 4px 8px;
+}
+
+.Sample {
+  margin-left: 20px;
+  margin-right: 30px;
+  background: #E0F0C0;
+  padding: 4px 0px 4px 8px;
+}
+
+.Huge {
+  margin-left: 20px;
+  background: #E0F0C0;
+  max-width: 90%;
+  height: 300px;
+  overflow: scroll;
+  padding: 4px 4px 4px 8px;
+}
+
+.Diagram {
+  margin-left: 20px;
+  margin-right: 30px;
+  background: #F8E8C0;
+  padding: 4px 0px 4px 8px;
+}
+
+.Inline {
+  background: #E0F0C0;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>GlkOte: a Javascript library for IF interfaces</h1>
+
+<em>GlkOte version 2.2.5</em><br>
+
+<em>Designed by Andrew Plotkin (erkyrath@eblong.com)<br>
+<a href="http://eblong.com/zarf/glk/glkote.html">(GlkOte home page</a>
+--
+<a href="http://eblong.com/zarf/glk/index.html">Glk home page)</a></em>
+<p>
+
+The GlkOte, GlkAPI, and Dialog Javascript libraries are copyright
+2008-2020 by Andrew Plotkin. They are distributed under the 
+<a href="LICENSE">MIT license</a>.
+<p>
+
+This documentation is licensed under a 
+<a href="http://creativecommons.org/licenses/by-nc-sa/3.0">Creative
+Commons Attribution-Noncommercial-Share Alike 3.0 Unported License</a>.
+<p>
+
+<hr>
+
+<h2><a name="contents">Contents</a></h2>
+
+<ul class="ContentTop">
+<li><a href="#whatis">What is GlkOte?</a>
+<ul>
+  <li><a href="#electron">GlkOte under Electron</a>
+</ul>
+<li><a href="#using">Using GlkOte</a>
+<li><a href="#lifecycle">The Application's Life Story</a>
+<ul>
+  <li><a href="#gennum">The Generation Number</a>
+</ul>
+<li><a href="#model">The Display Model</a>
+<ul>
+  <li><a href="#differglk">How This Differs From Glk</a>
+</ul>
+<li><a href="#glkoteinterface">The GlkOte Interface</a>
+<li><a href="#input">Input: Accepting User Events</a>
+<ul>
+  <li><a href="#partialinput">Partial Input</a>
+</ul>
+<li><a href="#output">Output: Updating the Display</a>
+<ul>
+  <li><a href="#windowsupdate">The Windows Update Array</a>
+  <li><a href="#inputupdate">The Input Update Array</a>
+  <li><a href="#contentupdate">The Content Update Array</a>
+  <ul>
+    <li><a href="#gridupdate">Grid Window Updates</a>
+    <li><a href="#bufferupdate">Buffer Window Updates</a>
+    <li><a href="#graphicsupdate">Graphics Window Updates</a>
+    <li><a href="#linedata">The Line Data Array</a>
+    <li><a href="#imagedata">Image Entries in Line Data</a>
+  </ul>
+  <li><a href="#timerupdate">The Timer Update</a>
+</ul>
+<li><a href="#specialrequests">Special Input Requests</a>
+<li><a href="#debug">Debug Commands</a>
+<li><a href="#disabling">Disabling the UI</a>
+<li><a href="#gameinterface">The Game Interface Object</a>
+<li><a href="#layout">Laying Out Windows</a>
+<ul>
+  <li><a href="#metrics">The Metrics Object</a>
+  <li><a href="#layoutmath">Doing the Math</a>
+  <li><a href="#layoutwhy">And Why?</a>
+</ul>
+<li><a href="#css">Customizing Your Stylesheet</a>
+<ul>
+  <li><a href="#cssgameport">The contents of the <code>gameport</code></a>
+  <li><a href="#csswindowport">The contents of the <code>windowport</code></a>
+  <li><a href="#csslines">Lines of text</a>
+  <li><a href="#extlinks">External hyperlinks</a>
+  <li><a href="#cssinput">The input field</a>
+  <li><a href="#cssspacing">Spacing, borders, and padding</a>
+</ul>
+<li><a href="#version">GlkOte Version History</a>
+</ul>
+
+<hr>
+
+<h2><a name="whatis">What is GlkOte?</a></h2>
+
+GlkOte is a tool for creating interactive fiction -- and other text-based applications -- on a web page. It is a Javascript library which handles the mechanics of displaying text, arranging panes of text, and accepting text input from the user.
+<p>
+
+GlkOte is based on the
+<a href="http://eblong.com/zarf/glk/index.html">Glk API</a>. 
+However, GlkOte's API is not identical to Glk, even allowing for the differences between Javascript and C. GlkOte is adapted to the realities of a web application environment -- a thin Javascript layer which communicates with a distant server in intermittent bursts. GlkOte does not handle certain elements of the Glk standard, such as memory streams and file storage, which are better kept within the game server. On the other hand, GlkOte is more flexible than Glk in certain ways; it may be suitable for more applications than Glk per se.
+<p>
+
+GlkOte can be used from two angles. First, in a purely client-side IF application. The (included, optional) glkapi.js file facilitates this; it wraps around GlkOte and provides an API that <em>is</em> identical to Glk, as closely as Javascript allows. An IF interpreter written in Javascript, running entirely within the user's web browser, can use glkapi.js just as a C interpreter uses a normal Glk library. Or it could bypass glkapi.js and use GlkOte directly.
+<p>
+
+Alternatively, GlkOte could be used with <a href="http://eblong.com/zarf/glk/remglk/docs.html">RemGlk</a>, a Glk library which acts as a web service. Any Glk-compliant interpreter (including Glulx interpreters) can be compiled with RemGlk. The resulting program is then run on a web server. A GlkOte web page sends AJAX requests to the server, which relays them (via CGI script) to the RemGlk program; the game responds back up the chain to the user's web browser. Thus, RemGlk and GlkOte together form a complete Glk web application.
+<p>
+
+Here is a 
+<a href="sample-demo.html">demonstration of a
+client-side IF application.</a>
+It is not a full-fledged IF game; it has only a trivial one-word parser. However, it demonstrates all the I/O capabilities of a typical IF game, including a status window, story window, line and character input, window resizing, scrollback, quote boxes, menus, and so on. (This demo does not use glkapi.js.)
+<p>
+
+A more complete example:
+<a href="http://eblong.com/zarf/glulx/quixe/">Quixe</a> 
+is an implementation of the Glulx virtual machine, using glkapi.js and GlkOte.
+<p>
+
+A
+<a href="sample-demobase.html">stripped-down, but easily extendable example.</a>
+This just accepts lines of input and responds to them, in a single window (no status window). In the HTML source, you'll see stub functions which print the initial text and respond to input lines; modify them as you wish.
+<p>
+
+<h3><a name="electron">GlkOte under Electron</a></h3>
+
+This version of GlkOte has extra support for the <a href="http://electron.atom.io/">Electron</a> environment. This is a version of Node.js wrapped up as an application shell, with extra APIs for native file support.
+<p>
+
+The differences do not affect the glkote.js module itself, so we will not discuss them here. The short answer is: under Electron, use the electrofs.js module instead of dialog.js. (These modules are concerned with file-selection dialogs and storing data.)
+<p>
+
+See <a href="https://github.com/erkyrath/lectrote">Lectrote</a> for a demonstration of GlkOte and Quixe running as an application.
+<p>
+
+<h2><a name="using">Using GlkOte</a></h2>
+
+To get oriented, look at this 
+<a href="sample-minimal.html">extremely minimal GlkOte web page</a>:
+<p>
+
+<pre class="Huge">
+&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;GlkOte: Extremely Minimal&lt;/title&gt;
+
+&lt;link rel="stylesheet" href="<a href="glkote.css">glkote.css</a>" type="text/css"&gt;
+
+&lt;style type="text/css"&gt;
+
+body {
+  margin: 0px;
+  height: 100%;
+}
+
+#gameport {
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: #CCAA88;
+  margin: 0px;
+}
+
+&lt;/style&gt;
+
+&lt;script src="<a href="jquery-1.12.4.min.js">jquery-1.12.4.min.js</a>" type="text/javascript"&gt;&lt;/script&gt;
+&lt;script src="<a href="glkote.js">glkote.js</a>" type="text/javascript"&gt;&lt;/script&gt;
+
+&lt;script type="text/javascript"&gt;
+
+var generation = 0;
+
+function accept() {
+  generation = generation+1;
+  var arg = { type: 'update', gen: generation };
+  GlkOte.update(arg);
+}
+
+Game = {
+  accept: accept,
+};
+
+&lt;/script&gt;
+
+&lt;/head&gt;
+&lt;body onLoad="GlkOte.init();"&gt;
+&lt;div id="gameport"&gt;
+&lt;div id="windowport"&gt;
+&lt;noscript&gt;&lt;hr&gt;
+&lt;p&gt;You'll need to turn on Javascript in your web browser to play this game.&lt;/p&gt;
+&lt;hr&gt;&lt;/noscript&gt;
+&lt;/div&gt;
+&lt;div id="loadingpane"&gt;
+&lt;img src="waiting.gif" alt="LOADING"&gt;&lt;br&gt;
+&lt;em&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;Loading...&lt;/em&gt;
+&lt;/div&gt;
+&lt;div id="errorpane" style="display:none;"&gt;&lt;div id="errorcontent"&gt;...&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p>
+
+This displays no windows and accepts no input. However, it demonstrates the essential features of all GlkOte applications. If you are creating such a thing, you will want to start with this sample page and build out.
+<p>
+
+Let us consider its elements.
+<p>
+
+<pre class="Sample">
+&lt;link rel="stylesheet" href="<a href="glkote.css">glkote.css</a>" type="text/css"&gt;
+</pre>
+<p>
+
+The
+<a href="glkote.css">default GlkOte stylesheet</a>
+contains style information for the windows and text elements that GlkOte generates. You will need to include this stylesheet for GlkOte to behave properly. However, you can customize most of its features, either by modifying the default stylesheet or by including more CSS style information in your page. 
+See "<a href="#css">Customizing Your Stylesheet</a>".
+<p>
+
+<pre class="Sample">
+&lt;style type="text/css"&gt;
+
+body {
+  margin: 0px;
+  height: 100%;
+}
+
+#gameport {
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: #CCAA88;
+  margin: 0px;
+}
+
+&lt;/style&gt;
+</pre>
+<p>
+
+These declarations lay out your document, and position the <code>gameport</code> div. GlkOte draws all of its content within the <code>gameport</code>. In this example, the <code>gameport</code> fills the entire page, but you can place it anywhere in your document (using normal CSS positioning). (You can also rename the <code>gameport</code> div if you need to; see "<a href="#gameinterface">The Game Interface Object</a>".)
+<p>
+
+<pre class="Sample">
+&lt;script src="<a href="jquery-1.12.4.min.js">jquery-1.12.4.min.js</a>" type="text/javascript"&gt;&lt;/script&gt;
+&lt;script src="<a href="glkote.js">glkote.js</a>" type="text/javascript"&gt;&lt;/script&gt;
+</pre>
+<p>
+
+These lines include the GlkOte library and the jQuery library. 
+<a href="http://jquery.com/">jQuery</a> 
+is an open-source Javascript library which simplifies web application work. GlkOte requires jQuery to function.
+<p>
+
+(GlkOte has been tested with 
+<a href="http://code.jquery.com/jquery-1.12.4.min.js">jQuery version 1.12.4</a>. It should work with 1.9.x and up, but not any earlier version.)
+<p>
+
+<pre class="Sample">
+&lt;script type="text/javascript"&gt;
+
+var generation = 0;
+
+function accept() {
+  generation = generation+1;
+  var arg = { type: 'update', gen: generation };
+  GlkOte.update(arg);
+}
+
+Game = {
+  accept: accept,
+};
+
+&lt;/script&gt;
+</pre>
+<p>
+
+To use the GlkOte library, you need a global variable, a function, and a global game object.
+<p>
+
+The function accepts input from the library (which is to say, from the user) and generates output in return. You pass this function to the GlkOte library by storing it in the global <code>Game</code> object.
+<p>
+
+In return, the GlkOte library exports a handful of functions for your use. The two important ones are <code>GlkOte.init</code> and <code>GlkOte.update</code>.
+<p>
+
+(The <code>generation</code> variable is needed to keep the library and your application in sync -- particularly if your application is actually a remote web service, like RemGlk. 
+See "<a href="#gennum">The Generation Number</a>".)
+<p>
+
+<pre class="Sample">
+&lt;body onLoad="GlkOte.init();"&gt;
+</pre>
+<p>
+
+The GlkOte library begins working when you call <code>GlkOte.init</code>. The simplest way to do this is to put this call in the <code>onLoad</code> attribute of your document.
+<p>
+
+<pre class="Sample">
+&lt;div id="gameport"&gt;
+&lt;div id="windowport"&gt;
+&lt;noscript&gt;&lt;hr&gt;
+&lt;p&gt;You'll need to turn on Javascript in your web browser
+    to play this game.&lt;/p&gt;
+&lt;hr&gt;&lt;/noscript&gt;
+&lt;/div&gt;
+&lt;div id="loadingpane"&gt;
+&lt;img src="waiting.gif" alt="LOADING"&gt;&lt;br&gt;
+&lt;em&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;Loading...&lt;/em&gt;
+&lt;/div&gt;
+&lt;div id="errorpane" style="display:none;"&gt;
+    &lt;div id="errorcontent"&gt;...&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+</pre>
+<p>
+
+This is the <code>gameport</code> div, which was mentioned earlier. It must appear somewhere in your page body, exactly as shown in the
+<a href="sample-minimal.html">demo</a>.
+<p>
+
+(Yes, it is an unwieldy block of text, but you only have to paste it in once.)
+<p>
+
+<h2><a name="lifecycle">The Application's Life Story</a></h2>
+
+As I said, GlkOte library begins working when the <code>GlkOte.init</code> function is called. Normally you put this call in your document's <code>onLoad</code> attribute, but you could call it from some other bit of script.
+<p>
+
+The first thing <code>GlkOte.init</code> does is measure things; the <code>gameport</code>, the size of various fonts, the amount of space needed to create a window, and so on. It assembles this information into a "metrics" object. The metrics will be used throughout the game, both by GlkOte and by your code, to lay out text and windows properly.
+<p>
+
+<code>GlkOte.init</code> then invokes your game's <code>accept</code> function, passing in a few bits of information. That is to say, it looks for a global <code>Game</code> object, and calls
+<p>
+
+<pre class="Sample">
+Game.accept({ type: 'init', gen: 0,
+    support: ['timer', 'graphics', 'hyperlinks'],
+    metrics: METRICS_OBJECT });
+</pre>
+<p>
+
+The <code>type:'init'</code> property indicates that this is the <em>first</em> call to <code>Game.accept</code> -- it says that the GlkOte library has just started up, and has no windows visible. The <code>gen</code> field will always be 0 for this first call. The <code>metrics</code> are as described above. (Your function should store a reference to this metrics object. You'll need it later to create windows. 
+See "<a href="#layout">Laying Out Windows</a>"
+for the details.)
+<p>
+
+The <code>support</code> field is an array of strings representing the capabilities of the GlkOte library. If you are packaging your game with the library, you don't have to worry about this -- you can just use the capabilities of the version you've got. However, RemGlk needs to know the display capabilities in order to set its gestalt flags correctly; the <code>support</code> list lets it do this.
+<p>
+
+The goal of your <code>Game.accept</code>, on this first call, is to create the initial windows, fill them with the initial text, and then set up the initial input fields.
+<p>
+
+You might expect a long list of API functions with which to accomplish this goal. You would be wrong. Instead, you stuff all that information -- window sizes and positions, paragraphs of text, input fields and all -- into a single sprawling data structure. Then you pass that data structure to <code>GlkOte.update</code>, and the library does all the work.
+<p>
+
+(This is the "intermittent burst" model I mentioned earlier. If your game is running in RemGlk, in a web server, then the <code>Game.accept</code> call is a single HTTP request -- and the data structure is a single HTTP response. One exchange and the game is ready to go.)
+<p>
+
+Once <code>Game.accept</code> has called <code>GlkOte.update</code>, its job is done. It exits, leaving the page full of windows, text, and an input prompt. The user is then left to do what users do so well: type something at random.
+<p>
+
+Once the user hits Return, the game is once again afooting. GlkOte once again invokes your <code>accept</code> function, passing in:
+<p>
+
+<pre class="Sample">
+Game.accept({type: 'line', gen: 1, value: 'help', window: 2});
+</pre>
+<p>
+
+This indicates that the user entered a line of text, containing the string "help", in window number 2. And what does <code>Game.accept</code> do? Why, exactly the same thing as before. It generates some more text, some more windows (if desired), a new input field; it stuffs all that information into a data structure; it passes it to <code>GlkOte.update</code>. And once again, the library does all the necessary work to update the screen.
+<p>
+
+And the user enters more text, and the cycle continues.
+<p>
+
+If you will indulge an ASCII-art diagram:
+<p>
+
+<pre class="Diagram">
+           +--------+  init   +--------+   page    +--------+
+(page      | GlkOte |  event  |  Game  |  changes  | GlkOte |
+ loads) -&gt; |  init  | ------&gt; | accept | --------&gt; | update |
+           +--------+         +--------+           +--------+
+
+
+                              +--------+   page    +--------+
+(user does      input event   |  Game  |  changes  | GlkOte |
+ something) ----------------&gt; | accept | --------&gt; | update |
+                              +--------+           +--------+
+</pre>
+<p>
+
+(A few other kinds of events can hit your <code>Game.accept</code> function. If you request character input, naturally, you'll get an event of type <code>char</code>. If the user resizes the window, you'll get an event of type <code>arrange</code>; you might want to redraw a status bar.)
+<p>
+
+<h3><a name="gennum">The Generation Number</a></h3>
+
+What is the generation number (the <code>gen</code> field) that shows up in these examples? It goes both directions, in fact; the library passes a generation number to <code>Game.accept</code>, and you must pass one to <code>GlkOte.update</code>. The generation number ensures that the library's display and the game state remain in sync.
+<p>
+
+This is not a big concern for a pure Javascript application. A browser executes Javascript in a single thread, with a synchronous flow of control. Each input event is handled before the next one arrives.
+<p>
+
+However, for RemGlk, life is more complicated. A RemGlk game is running at the far end of a daisy-chain of HTTP requests, CGI invocations, and so on. Messages can get delayed or crossed in transit.
+<p>
+
+Therefore, it is <code>Game.accept</code>'s responsibility to maintain a numeric generation number. Each time it calls <code>GlkOte.update</code>, it must increase the number by at least one. If the library sees an update arrive with an out-of-order generation number, it knows to ignore the update.
+<p>
+
+(To be strictly pedantic, your game only needs to bump the generation number if something has actually changed. If there are no page changes at all, the generation may remain unchanged too. This might happen if the user hits "reload" in his web browser; the game would then have to send him a fresh update, even though nothing has happened in the interpreter.)
+<p>
+
+The generation number must be checked in the other direction, as well. When the library calls <code>Game.accept</code>, it includes the generation number of the last update it got. If you see that this does not match your idea of the game state, you should ignore the input event. (This might happen if the user sends some input, and then sends some more before you have processed the first event. Both events would have the same generation number. So you'd process the first one, bump your generation number, send an update back; then the second event would arrive, you'd see the unbumped number, and ignore the event.)
+<p>
+
+<h2><a name="model">The Display Model</a></h2>
+
+The game display consists of a set of windows. A window is a rectangular area of the <code>windowport</code>. You specify its location by pixels (x, y, width, height). There are currently two types of windows: grid windows and buffer windows.
+<p>
+
+A grid window is a rectangular grid of fixed-width characters. (This is the upper window or status bar of most IF games.) You update a grid window by defining the lines of text that it contains. You can update any or all of a grid window's lines at a time.
+<p>
+
+A buffer window is a scrollable pane of text. (This is the lower window or story window of most IF games.) You update a buffer window by adding text to the end. You cannot change text that already appears in the buffer window, except by clearing the entire window and starting over.
+<p>
+
+Each window may have one input field. You can tell a window to accept character input (a keystroke), line input (a line of text), or no input (in which case there is no input field).
+<p>
+
+(Most IF games only have one input field at a time. However, GlkOte supports accepting input from multiple windows at the same time.)
+<p>
+
+(It is legal to have <em>no</em> input fields at a given time. But the game is then (mostly) paralyzed, because the player cannot type anything to change the fact that there are no input fields. You will generally only do this when a game has ended.)
+<p>
+
+An input field in a buffer window (whether it is line or character input) always appears at the end of the window's text. An input field in a grid window can be positioned anywhere in the grid.
+<p>
+
+You <em>cannot update a window which is awaiting input.</em> If you try, a fatal error message will pop up. If you need to do this, you must remove the window's input field, update the window contents, and then post a new input field. (The <code>GlkOte.update</code> API makes this fairly simple; 
+see "<a href="#inputupdate">The Input Update Array</a>".)
+<p>
+
+<h3><a name="differglk">How This Differs From Glk</a></h3>
+
+If you are familiar with the Glk specification, you are wondering why this window model is so simple. Glk defines a tree of windows, each of which can be split into two non-overlapping subwindows, with size constraints to control the width or height of each split.
+<p>
+
+The GlkOte model is simpler because it is intended to be hooked up to RemGlk. In that model, the game (running under RemGlk) defines the usual window split tree. RemGlk uses that tree, together with the metrics information provided by GlkOte, to determine the position of each window. It then passes that position information along to GlkOte. The GlkOte library doesn't need to know why the windows are where they are; it just needs the position of each window.
+<p>
+
+If you are <em>not</em> using RemGlk, this makes your life somewhat harder. You will have to compute the window positions on your own. You do not have to implement the full Glk window tree, but you <em>do</em> have to respect all of the window metrics, which are moderately complicated. 
+See "<a href="#layout">Laying Out Windows</a>".
+<p>
+
+<h2><a name="glkoteinterface">The GlkOte Interface</a></h2>
+
+All of the library's functionality is encapsulated in the <code>GlkOte</code> object. The following properties and functions are available:
+<p>
+
+<pre class="Def">
+GlkOte.version
+</pre>
+<p>
+
+A string representing the library version number. This will be of the form "X.Y.Z".
+<p>
+
+<pre class="Def">
+GlkOte.init()
+</pre>
+<p>
+
+Call this to begin the game. Until this is called, the <code>gameport</code> displays the "Loading" pane.
+<p>
+
+You can optionally pass a game interface object as the argument; e.g., <code>GlkOte.init(MyGame)</code>. This tells the library to use the given interface, instead of looking for a global <code>Game</code> object. 
+See "<a href="#gameinterface">The Game Interface Object</a>".
+<p>
+
+<pre class="Def">
+GlkOte.update(obj)
+</pre>
+<p>
+
+Tell the library to update the display. The argument is a complex object which includes information on updating the windows, window contents, and input fields. See "<a href="#output">Updating the Display</a>".
+<p>
+
+<pre class="Def">
+GlkOte.extevent(val)
+</pre>
+<p>
+
+Tell the library to cause a special input event, immediately. This is routed through <code>Game.accept</code>, just like all other input events. (See "<a href="#input">Input</a>".) The argument is passed through unchanged into the input event object.
+<p>
+
+This function lets you handle external conditions (such as timers, or events caused by other libraries) in the same framework as GlkOte's events. You should only call <code>GlkOte.extevent</code> while waiting for input -- that is, in the interval after a <code>GlkOte.update</code> call.
+<p>
+
+<pre class="Def">
+GlkOte.getinterface()
+</pre>
+<p>
+
+Return the game interface object that the library is using. This is the global <code>Game</code> object, unless you passed something else to <code>GlkOte.init</code>. See "<a href="#gameinterface">The Game Interface Object</a>".
+<p>
+
+This exists in case another library (such as dialog.js) wants to imitate some of GlkOte's display preferences.
+<p>
+
+<pre class="Def">
+GlkOte.error(msg)
+</pre>
+<p>
+
+Display a message to the user. It appears in a pane overlaid on the game's <code>windowport</code>. The error pane cannot be dismissed without reloading the page, so this should be reserved for <em>fatal</em> errors -- the server is not responding, an interpreter bug or assertion, etc.
+<p>
+
+(The standard error-pane style goes translucent on hover, so that the player can read the entire display after the error.)
+<p>
+
+<pre class="Def">
+GlkOte.warning(msg)
+</pre>
+<p>
+
+Display a warning message to the user. As with <code>GlkOte.error</code>, it appears in an overlaid pane, but in a less threatening color. Unlike an error, a warning can be removed -- call <code>GlkOte.warning()</code> with no argument. An error overrides a warning.
+<p>
+
+This can be used for temporary interruptions, or for an end-of-session message. (Permanent but not alarming.) It should not be used for debugging output. Do not rely on the translucent-on-hover behavior to expect the player to keep playing while the warning is visible.
+<p>
+
+<pre class="Def">
+GlkOte.log(msg)
+</pre>
+<p>
+
+Send a message to the browser's Javascript console, if possible. (If it is not possible, the message is silently dropped.) This currently works on Safari, Opera, and Firefox (only if Firebug is installed).
+<p>
+
+Log messages are not visible to the user unless he explicitly calls up the console display. This function is intended for debugging only. A final release of a game or interpreter should only call it in nonfatal error cases.
+<p>
+
+<h2><a name="input">Input: Accepting User Events</a></h2>
+
+Your <code>Game.accept</code> function will be called each time the user does something. (Starting the game counts as "doing something".) It will be given a single argument, an object.
+<p>
+
+The argument will always have <code>type</code> and <code>gen</code> properties. The <code>type</code> describes what kind of event has happened. The <code>gen</code> is a generation number; it is copied from the last <code>GlkOte.update</code> call that the library got.
+<p>
+
+<pre class="Def">
+{ type: 'init', gen: 0, 
+    support: ['timer', 'graphics', 'hyperlinks'],
+    metrics: METRICS_OBJECT }
+</pre>
+<p>
+
+Game initialization. This includes a capabilities list
+(see "<a href="#lifecycle">The Application's Life Story</a>")
+and the window metrics 
+(see "<a href="#metrics">The Metrics Object</a>").
+Since this arrives before you do any updates, the generation number will be zero.
+<p>
+
+<pre class="Def">
+{ type: 'line', gen: GENERATION, window: WINDOW_ID, value: STRING, 
+    terminator: CHAR }
+</pre>
+<p>
+
+Line input in the named window. The <code>value</code> property will be the line which the user typed. (It will not have a terminal newline.)
+<p>
+
+If line input was entered in the normal way (typically the Enter key), the <code>terminator</code> property will be absent. If line input was terminated by a special terminator keystroke (see "<a href="#inputupdate">The Input Update Array</a>"), its name will be in the <code>terminator</code> property. This will be one of the following strings:
+<p>
+
+<pre class="Sample">
+escape, func1, func2, func3, func4, func5, func6,
+    func7, func8, func9, func10, func11, func12
+</pre>
+<p>
+
+<pre class="Def">
+{ type: 'char', gen: GENERATION, window: WINDOW_ID, value: CHAR }
+</pre>
+<p>
+
+Character input in the named window. The <code>value</code> property will be the character which the user typed. If this is a printable character (or space), the value will simply be that character (a string of length one). If it was a special key, the value will be one of the following strings:
+<p>
+
+<pre class="Sample">
+left, right, up, down, return, delete, escape, tab,
+    pageup, pagedown, home, end,
+    func1, func2, func3, func4, func5, func6,
+    func7, func8, func9, func10, func11, func12
+</pre>
+<p>
+
+(Not all browsers can trap all of these special keys. If you want to wait for one of them, it is wise to accept printable alternatives. For example, accept N(ext) and P(revious) as alternatives to <code>up</code> and <code>down</code>.)
+<p>
+
+<pre class="Def">
+{ type: 'hyperlink', gen: GENERATION, window: WINDOW_ID, value: VALUE }
+</pre>
+<p>
+
+Hyperlink click in the named window. The <code>value</code> property will be the target value for the link (passed in when the link was created).
+<p>
+
+<pre class="Def">
+{ type: 'mouse', gen: GENERATION, window: WINDOW_ID, x: NUMBER, y: NUMBER }
+</pre>
+<p>
+
+Mouse click in the named window. The <code>x</code> and <code>y</code> fields are a character position (for a grid window) or a pixel position (for a graphics window).
+<p>
+
+<pre class="Def">
+{ type: 'arrange', gen: GENERATION, metrics: METRICS_OBJECT }
+</pre>
+<p>
+
+Resize event. The <code>gameport</code> has changed size, and so the game window sizes must be recomputed. The event provides the new window metrics. (This event may also happen if the display font has changed, or something else which affects the metrics.)
+<p>
+
+<pre class="Def">
+{ type: 'redraw', gen: GENERATION, window: WINDOW_ID }
+</pre>
+<p>
+
+Redraw event. The contents of a graphics window have been lost and must be redrawn. If the <code>window</code> field is absent, all graphics windows must be redrawn. The affected windows are already cleared to their current background color.
+<p>
+
+<pre class="Def">
+{ type: 'specialresponse', gen: GENERATION, response: TYPE, value: VALUE }
+</pre>
+<p>
+
+A special response, responding to a special input request. See "<a href="#specialrequests">Special Input Requests</a>". The <code>response</code> field indicates the request type. (The only <code>response</code> value currently supported is <code>"fileref_prompt"</code>.)
+<p>
+
+<pre class="Def">
+{ type: 'external', gen: GENERATION, value: VALUE }
+</pre>
+<p>
+
+An external event, which you triggered by calling <code>GlkOte.extevent</code>. The <code>value</code> property will be whatever you passed to <code>GlkOte.extevent</code>.
+<p>
+
+<pre class="Def">
+{ type: 'debuginput', gen: GENERATION, value: STRING }
+</pre>
+<p>
+
+A debug command. See "<a href="#debug">Debug Commands</a>".
+
+<pre class="Def">
+{ type: 'refresh', gen: GENERATION }
+</pre>
+<p>
+
+Browser refresh. You receive this if the library has missed some updates, or if you sent a <code>retry</code> response. The <code>gen</code> number in this input is <em>not</em> up to date; it is some old value (perhaps even zero). Your job is to send an update which includes everything which has happened since then.
+<p>
+
+A pure Javascript game will not get <code>refresh</code> events, because it will never send <code>retry</code> responses and will never get out of sync with the library.
+<p>
+
+<h3><a name="partialinput">Partial Input</a></h3>
+
+It is possible for an event to arrive, while line input is in progress in an unrelated window. (For example, the <code>arrange</code> event will usually interrupt line input in the main window. If you have input fields in two windows at once, then an input event in one window will interrupt the other.)
+<p>
+
+If you plan to leave the input field in place, this is not a problem. Ignore the partial input; the library will leave the input field alone.
+<p>
+
+However, you might want to cancel that input field and then restart it. (If you want to update that window, you <em>must</em> do this -- 
+see "<a href="#model">The Display Model</a>".) 
+To restart input without annoying the user, you have to know what the user has typed so far in that field.
+<p>
+
+The library supports this by providing a partial input object for any interrupted line input. This may occur in <em>any</em> input event object. (Except of course for <code>init</code> events -- at the beginning of the game, there are no input events to interrupt.)
+<p>
+
+A partial input object contains one property for each window with partial input; the property name is the window ID, and the value is whatever the user has typed so far. (Note that even though the object has numeric keys, it is a Javascript object, not a Javascript array.)
+<p>
+
+For example, if the user has typed "get la" in a line input field in window 2, and then the user resizes the window, you would get the input:
+<p>
+
+<pre class="Sample">
+{ type: 'arrange', gen: GENERATION, metrics: METRICS_OBJECT,
+  partial: { 2: 'get la' } }
+</pre>
+<p>
+
+The input object will only have a <code>partial</code> property if there is partial input for at least one window. A window only produces partial input data for line input (not character input), and only if the player has actually typed something (the value will not be the empty string). Also, a line input event for a window will not contain partial input for that same window!
+<p>
+
+<h2><a name="output">Output: Updating the Display</a></h2>
+
+You should call <code>GlkOte.update</code> exactly once in each invocation of your <code>Game.accept</code> function. (If you don't call <code>GlkOte.update</code>, the game will stop accepting input. Calling <code>GlkOte.update</code> more than once is not illegal, but it is inefficient. It just forces the library to do more DOM work than the ultimate result requires.)
+<p>
+
+<code>GlkOte.update</code> takes one argument, an object. This can take a few different forms:
+<p>
+
+<pre class="Def">
+{ type: 'pass' }
+</pre>
+<p>
+
+Do nothing.
+<p>
+
+<pre class="Def">
+{ type: 'error', message: STRING }
+</pre>
+<p>
+
+A fatal error. This is equivalent to calling <code>GlkOte.error</code>.
+<p>
+
+<pre class="Def">
+{ type: 'retry' }
+</pre>
+<p>
+
+This tells the library that you are still working, and it should send a <code>refresh</code> event in a few seconds to see what you've come up with. 
+(See "<a href="#input">Accepting User Events</a>".) 
+A pure Javascript game will not use this. RemGlk uses it if the server is running too slowly.
+<p>
+
+<pre class="Def">
+{ type: 'update', gen: GENERATION,
+  windows: WINDOWS_ARRAY, content: CONTENT_ARRAY, input: INPUT_ARRAY,
+  timer: INTERVAL, disable: BOOLEAN, specialinput: OBJ }
+</pre>
+<p>
+
+This is the most common, and most complex, case. The <code>gen</code> is a generation number; it must be higher than the generation number of the input event that caused this update.
+<p>
+
+The <code>windows</code>, <code>content</code>, and <code>input</code> fields are optional. You may include all three, but it is better to include only the ones which are necessary for the update you are doing. It is legal to include <em>none</em> of these fields; but this indicates that the display has not changed, in which case you might as well not bump the generation number, in which case you might as well use <code>type: 'pass'</code>.
+<p>
+
+The order of the values in the <code>windows</code>, <code>content</code>, and <code>input</code> arrays is not significant.
+<p>
+
+The <code>timer</code> value (if present and not null) sets a repeating timer. See "<a href="#timerupdate">The Timer Update</a>". If the flag is null, the timer is cleared. If the flag is absent, the timer not affected.
+<p>
+
+The <code>specialinput</code> value (if present and not null) indicates that the game should stop and display a special input request. See "<a href="#specialrequests">Special Input Requests</a>". The game is otherwise disabled, just as if the <code>disable</code> flag were set.
+<p>
+
+The <code>disable</code> flag (if present and true) places the entire game into a disabled state. See "<a href="#disabling">Disabling the UI</a>". If the flag is absent or false, the UI will be enabled (or re-enabled).
+<p>
+
+<h3><a name="windowsupdate">The Windows Update Array</a></h3>
+
+The <code>windows</code> property of the update argument is an array listing all the windows which should be visible. If no windows have been created, destroyed, or changed position or size since the last update, you should omit the <code>windows</code> field. (Omitting it is different from including an <em>empty</em> <code>windows</code> array; that would cause all windows to be closed.)
+<p>
+
+Each element in the <code>windows</code> array has one of the forms:
+<p>
+
+<pre class="Sample">
+{ id: WINDOW_ID, type: 'buffer', rock: ROCK_VALUE,
+  left: POS, top: POS, width: SIZE, height: SIZE }
+
+{ id: WINDOW_ID, type: 'grid', rock: ROCK_VALUE,
+  gridheight: LINES, gridwidth: ROWS,
+  left: POS, top: POS, width: SIZE, height: SIZE }
+
+{ id: WINDOW_ID, type: 'graphics', rock: ROCK_VALUE,
+  graphwidth: SIZE, graphheight: SIZE,
+  left: POS, top: POS, width: SIZE, height: SIZE }
+</pre>
+<p>
+
+The window ID is a (positive) integer which will identify the window. Do not reuse window IDs; each window you open should have a brand-new ID number.
+<p>
+
+The rock value can be any number or string. The only effect of the rock within GlkOte is to set a CSS class for the window div. 
+(See "<a href="#csswindowport">The contents of the <code>windowport</code></a>".)
+<p>
+
+The <code>left</code>, <code>top</code>, <code>width</code>, and <code>height</code> define the window's position within the <code>windowport</code>. The values are in pixels. 
+See "<a href="#layout">Laying Out Windows</a>"
+for more than you wanted to know about determining these values.
+<p>
+
+A grid window must have <code>gridwidth</code> and <code>gridheight</code> values as well. These are measured in characters (the number of columns and rows in the character grid). These values should fit within the pixel <code>width</code> and <code>height</code>, when all of the grid character metrics are taken into account.
+<p>
+
+Graphics windows depend on the <code>&lt;canvas&gt;</code> HTML element. Do not try to open a graphics window in an older browser which does not support <code>&lt;canvas&gt;</code>.
+<p>
+
+A graphics window must have <code>graphwidth</code> and <code>graphheight</code> values. These are in pixels, and must fit in <code>width</code> and <code>height</code> when the metrics (<code>graphicsmarginx/y</code>) are taken into account. A newly-opened graphics window is cleared to white, and its default fill color is white. If a graphics window is resized, it is cleared to its current default fill color.
+<p>
+
+<h3><a name="inputupdate">The Input Update Array</a></h3>
+
+The <code>input</code> property is an array listing all the windows which should be awaiting input. If no input fields have been cancelled or posted since the last update, you should omit the <code>input</code> field. (Omitting it is different from including an <em>empty</em> <code>input</code> array; that would cancel all input fields.)
+<p>
+
+Each element in the <code>input</code> array has one of the following forms:
+<p>
+
+<pre class="Sample">
+{ id: WINDOW_ID, hyperlink: BOOLEAN, mouse: BOOLEAN }
+</pre>
+<p>
+
+This indicates that there will be no line or character input in the given window. The (optional) <code>hyperlink</code> and <code>mouse</code> properties indicate whether there will be hyperlink or mouse-click input.
+<p>
+
+If both flags are false or missing, the window will accept no input at all. This is equivalent to leaving the window out of the <code>input</code> array entirely.
+<p>
+
+<pre class="Sample">
+{ id: WINDOW_ID, gen: GENERATION_NUMBER, type: 'char',
+  hyperlink: BOOLEAN, mouse: BOOLEAN }
+
+{ id: WINDOW_ID, gen: GENERATION_NUMBER, type: 'line',
+  maxlen: MAX_INPUT_LENGTH, initial: STRING, terminators: KEY_ARRAY,
+  hyperlink: BOOLEAN, mouse: BOOLEAN }
+</pre>
+<p>
+
+These forms indicate that there will be character or line input in the given window. The (optional) <code>hyperlink</code> and <code>mouse</code> properties indicates whether there will be hyperlink or mouse-click input.
+<p>
+
+Note that buffer windows do not support mouse-click input.
+<p>
+
+If this is a grid window, you must also include <code>xpos</code> and <code>ypos</code> properties, indicating where the char/line input field will begin. (An input field in a buffer window always appears at the end of the buffer's text.)
+<p>
+
+For line input, you must include the <code>maxlen</code> property, indicating the maximum number of characters the player may enter. You may include an <code>initial</code> property, giving a string to preload the input field with. You may also include a <code>terminators</code> property, giving a list of names of keys that will terminate input. See <a href="#input">above</a> for the list of terminator key names. (The <code>initial</code> and <code>terminators</code> fields are optional, defaulting to the empty string or array.)
+<p>
+
+The <code>gen</code> field must contain the generation number at which this input field was created. If the library does not know about it (i.e., if the field is not already present in the window) then the <code>gen</code> makes no difference. However, if the field <em>is</em> present, then the <code>gen</code> is basically distinguishing between two cases:
+<p>
+
+<ul>
+<li>The field was created in some earlier update generation. The library will not touch it or affect the user's editing state; the <code>initial</code> and <code>terminators</code> fields are ignored. In this case, you may not update the window's contents.
+</ul>
+
+<ul>
+<li>The earlier input is cancelled; you are creating a new version of the input field at the current generation. In this case, you may update the window's contents. (The updates will be assumed to occur after the old input is cancelled.) You may preserve the user's partial input (from the last input event) by copying it to the <code>initial</code> field.
+</ul>
+
+(To cancel the earlier input <em>without</em> creating a new version, just leave that entry out of the input update array.)
+<p>
+
+(The editing state and the <code>initial</code> and <code>terminators</code> properties are meaningless for character input. But you must still provide the <code>gen</code> value, and -- if it is old -- obey the restriction about not updating the window.)
+<p>
+
+<h3><a name="contentupdate">The Content Update Array</a></h3>
+
+The <code>content</code> property of the update argument is an array listing all the windows which should be visible. If no windows have changed since the last update, you should omit the <code>content</code> field. (Although an empty <code>content</code> array is, for a wonder, the same as omitting it entirely.)
+<p>
+
+Each element in the <code>content</code> array describes all the changes in one window since the last update.
+<p>
+
+<h4><a name="gridupdate">Grid Window Updates</a></h4>
+
+<pre class="Sample">
+{ id: WINDOW_ID, lines: [
+  { line: LINE_NUM, content: LINE_DATA_ARRAY },
+  { line: LINE_NUM, content: LINE_DATA_ARRAY },
+  ... ] }
+</pre>
+<p>
+
+Each element in the <code>lines</code> array represents one line of the grid to update. (It is, of course, best to update only the lines which have changed.) The entire line is cleared and replaced with the <code>content</code> of this element.
+<p>
+
+(To clear a line completely, you may use an empty <code>content</code> array, or omit the <code>content</code> field entirely.)
+<p>
+
+The <code>content</code> describes the line in terms of runs of characters which have the same style. The format is described <a href="#linedata">below</a>.
+
+<h4><a name="bufferupdate">Buffer Window Updates</a></h4>
+
+<pre class="Sample">
+{ id: WINDOW_ID, clear: BOOLEAN, text: [
+  { append: BOOLEAN, flowbreak: BOOLEAN, content: LINE_DATA_ARRAY },
+  { append: BOOLEAN, flowbreak: BOOLEAN, content: LINE_DATA_ARRAY },
+  ... ] }
+</pre>
+<p>
+
+If the <code>clear</code> property is true, the buffer window is first cleared.
+<p>
+
+Then, each element in the <code>text</code> array represents one line (or paragraph) to add to the buffer. If the element's <code>append</code> property is true, the text is appended to the last line that currently exists in the buffer. If false, the text forms a new line. (If the buffer is empty, <code>append</code> is ignored and the text becomes the buffer's first line.)
+<p>
+
+If <code>flowbreak</code> is true, the paragraph is moved down below any floating (left or right) images.
+<p>
+
+The <code>content</code> describes the line in terms of runs of characters which have the same style. The format is described <a href="#linedata">below</a>.
+<p>
+
+The <code>clear</code>, <code>append</code>, and <code>flowbreak</code> values may be omitted; they default to false. Omitting <code>text</code> is equivalent to an empty array. Within the <code>text</code> array, the <code>content</code> may be omitted if there is no data for the line. Therefore, an empty object <code>{}</code> is a valid array entry; it indicates a blank line.
+<p>
+
+(For efficiency, only the first element of the <code>text</code> array should have <code>append</code>. Condense elements into complete paragraphs where possible.)
+<p>
+
+<h4><a name="graphicsupdate">Graphics Window Updates</a></h4>
+
+<pre class="Sample">
+{ id: WINDOW_ID, draw: [
+  { special: 'setcolor', color: COLOR },
+  { special: 'fill' },
+  { special: 'fill', color: COLOR,
+    x: NUMBER, y: NUMBER, width: NUMBER, height: NUMBER },
+  { special: 'image', image: NUMBER, x: NUMBER, y: NUMBER,
+    width: NUMBER, height: NUMBER, url: STRING, alttext: STRING },
+  ... ] }
+</pre>
+<p>
+
+Each element in the <code>draw</code> array represents a drawing operation, specified by the <code>special</code> field.
+<p>
+
+<code>setcolor</code> sets the (default) fill color. The <code>color</code> field (required) should be a string containing a valid CSS color. (There are several possible formats; the most familiar looks like <code>"#C0207F"</code>.) This does not change the window appearance, but it affects later <code>fill</code> commands and window resizes.
+<p>
+
+<code>fill</code> fills a rectangle of the graphics window with a color. If the <code>color</code> field is given, it should be a valid CSS color; if omitted, the default fill color will be used. If the <code>x, y, width, height</code> fields are given, they define the fill rectangle; if omitted, the entire graphics window is filled. (All four of these fields must be specified if any is.)
+<p>
+
+<code>image</code> draws an image into the window. See <a href="#imagedata">below</a> for the description of the image object.
+<p>
+
+(For efficiency, minimize overdraw where possible. It's a waste of time to have multiple window-filling operations in the same <code>draw</code> array, or to draw content that is then erased by filling the window with a solid color.)
+<p>
+
+<h4><a name="linedata">The Line Data Array</a></h4>
+
+Both grid and buffer windows use a <code>content</code> field, which contains an array of runs of characters. Each run in the array has the form
+<p>
+
+<pre class="Sample">
+{ style: STYLE, hyperlink: VALUE, text: STRING }
+</pre>
+<p>
+
+This gives the name of a style, and a string of characters in that style. If the (optional) <code>hyperlink</code> property is defined, the run is a hyperlink with that target value.
+<p>
+
+All these runs are concatenated to make the line. For grid windows, if this is short of the grid width, it is padded (on the right) with whitespace in the "normal" style. For buffer windows, no padding is needed.
+<p>
+
+Some windows can contain special inline entries, such as images in a buffer window. These are described by a "run" object with a <code>special</code> field (and no text). See <a href="#imagedata">below</a>.
+<p>
+
+You can also describe a text run in the array by giving two separate strings (the style and text values). This is a simpler format for a run; note that it cannot specify a hyperlink or a special entry. You can even mix the two run formats:
+<p>
+
+<pre class="Sample">
+[ STYLE1, STRING1, 
+  { style: STYLE2, text: STRING2 }, 
+  STYLE3, STRING3, ... ]
+</pre>
+<p>
+
+Yes, parsing this is a bit of a nuisance. You have to examine the type of each entry to decide whether it's an object or (the first of) a pair of strings. Then, if it's an object, you have to look for a <code>special</code> field. Sorry; the format has evolved over time.
+
+<h4><a name="imagedata">Image Entries in Line Data</a></h4>
+
+An image entry in the line data array has the <code>special</code> value <code>"image"</code>.
+<p>
+
+<pre class="Sample">
+{ special: 'image', image: NUMBER, hyperlink: VALUE,
+  alignment: ALIGNMENT,
+  width: NUMBER, height: NUMBER, url: STRING, alttext: STRING }
+</pre>
+<p>
+
+In the simplest case, the <code>url</code> field is a URL which refers to the image resource. (The URL can be absolute or relative to the document. However, absolute is preferred, in case the update stream is recorded and stored on a different server.) If the application uses GiLoad to locate image data, you may supply an <code>image</code> number instead of a <code>url</code>.
+<p>
+
+The <code>width</code> and <code>height</code> fields are <em>required</em>. If they do not match the image's native size, it will be resized to the given values.
+<p>
+
+The alignments are <code>"inlineup"</code>, <code>"inlinedown"</code>, <code>"inlinecenter"</code>, <code>"marginleft"</code>, <code>"marginright"</code>. The margin alignments float left and right (in the HTML sense). The others are <em>vertical</em> alignments; the image hangs above, below, or centered relative to its line of text. If the <code>alignment</code> is missing or unrecognized, the default is <code>"inlineup"</code>.
+<p>
+
+The <code>alttext</code> is recommended. If you do not supply this, GlkOte will create some generic alt text for the image.
+<p>
+
+The <code>hyperlink</code> is optional. If defined, the image is a hyperlink with that target value.
+<p>
+
+An image entry in a graphics content array is similar:
+<p>
+
+<pre class="Sample">
+{ special: 'image', image: NUMBER, x: NUMBER, y: NUMBER,
+  width: NUMBER, height: NUMBER, url: STRING }
+</pre>
+<p>
+
+Here the <code>x</code>, <code>y</code>,  <code>width</code>,  <code>height</code> fields are all required. The <code>x</code> and <code>y</code> fields give the position of (the top left corner of) the image. There is no <code>alignment</code>, <code>hyperlink</code>, or <code>alttext</code>.
+<p>
+
+<h3><a name="timerupdate">The Timer Update</a></h3>
+
+The <code>timer</code> property of the update must be null or a positive number. If a number, it sets a repeating timer; the game will receive a <code>timer</code> input event every N milliseconds from now on. If the <code>timer</code> property is null, the timer is cancelled (if it is running).
+<p>
+
+Note that a positive <code>timer</code> will restart the repeating timer from zero, even if the previous interval was the same as the new one. To allow the timer to continue running across updates, omit the <code>timer</code> property entirely.
+<p>
+
+Also note that older versions of GlkOte did not support the <code>timer</code> property. Therefore, older game code had to set up its own timeouts and call <code>GlkOte.extevent</code> to trigger a timer event. This remains a valid approach.
+<p>
+
+<h2><a name="debug">Debug Commands</a></h2>
+
+The UI may provide a side channel to send debug commands to the game. (If you include the gi_debug.js library, this appears as a floating pane above the GlkOte UI.)
+<p>
+
+Commands sent from this channel arrive as user events of this form:
+<p>
+
+<pre class="Sample">
+{ type: 'debuginput', gen: GENERATION, value: STRING }
+</pre>
+<p>
+
+When the game generates debug output, include a <code>debugoutput</code> list in your <code>GlkOte.update</code> call:
+<p>
+
+<pre class="Sample">
+debugoutput: [ TEXT, TEXT, ... ]
+</pre>
+<p>
+
+Note that the value must be a list of strings, each representing one line of debug output. (It may be an empty list, but do not use a string with no list around it.) Any update may include a <code>debugoutput</code> list, not just responses to <code>debuginput</code>.
+<p>
+
+<h2><a name="specialrequests">Special Input Requests</a></h2>
+
+Currently, the only supported special input is a request for a file. This will disable the UI and post a dialog box for the user to select (or create) a file.
+<p>
+
+To do this, include a <code>specialinput</code> object in your <code>GlkOte.update</code> call:
+<p>
+
+<pre class="Sample">
+specialinput: { type: 'fileref_prompt',
+  filemode: MODE, filetype: TYPE,
+  gameid: VALUE
+}
+</pre>
+<p>
+
+The <code>filemode</code> must be one of the strings <code>read</code>, <code>write</code>, <code>readwrite</code>, <code>writeappend</code>. These indicate what operation will be done with the file. (This affects whether a selection or creation dialog box is displayed.)
+<p>
+
+The <code>filetype</code> must be one of the strings <code>data</code>, <code>save</code>, <code>transcript</code>, <code>command</code>. These indicate what type of file is being requested. (This affects the prompt displayed in the dialog box.)
+<p>
+
+The <code>gameid</code> is a string which identifies what game is being played. This is used to filter the files listed in the dialog box, so that only files appropriate to the game are included. The <code>gameid</code> does not have to be human-readable; it could be (for example) a base64-encoded dump of the game's header.
+<p>
+
+The <code>gameid</code> field is optional. In general, you should only include it for the <code>save</code> filetype. (Save-game files are game-specific, but data files can be exchanged between games.)
+<p>
+
+When the user makes a selection, you will get a user event in this form:
+<p>
+
+<pre class="Sample">
+{ type: 'specialresponse', gen: GENERATION, response: 'fileref_prompt',
+  value: VALUE }
+</pre>
+<p>
+
+If the <code>value</code> is missing or null, the user hit Cancel. Otherwise, the <code>value</code> will be a fileref object. This can be used to read or write data to HTML browser storage. (See the documentation in the dialog.js library.)
+<p>
+
+Note that if GlkOte is connected to a server-side library (such as RemGlk), browser storage is not an appropriate solution. In that case, you would not use dialog.js, but an alternative library (not yet implemented). The user would simply be prompted for a filename, and <code>value</code> would contain this filename as a string.
+<p>
+
+<h2><a name="disabling">Disabling the UI</a></h2>
+
+If you want to temporarily suspend all UI activity, call <code>GlkOte.update</code> with an update that includes the <code>disable</code> flag. The display will be updated as you request, but it will also be disabled. All input fields will be disabled (given the HTML <code>disabled</code> attribute). All input events, including keyboard input and hyperlinks, will be suppressed. Scrolling will work normally.
+<p>
+
+If the user resizes the window while the UI is disabled, you will not get an <code>arrange</code> event immediately. The event will arrive after you re-enable the UI.
+<p>
+
+(You might disable the UI to block game activity while prompting for input outside the GlkOte library. For example, while prompting for a save-game location using the dialog.js library. It is also reasonable to disable the UI when the game is over, on the final game update.)
+<p>
+
+The UI will remain disabled until the next <code>GlkOte.update</code> call which lacks the <code>disable</code> flag.
+<p>
+
+<h2><a name="gameinterface">The Game Interface Object</a></h2>
+
+The GlkOte library interacts with your game through a single channel: the game interface object. You provide this; the properties of the object define the game behavior.
+<p>
+
+The easy way to do this is to create a global object (i.e., an object at the top level of your script) called <code>Game</code> (with a capital G). <code>GlkOte.init</code> will see this object and take it as the game interface.
+<p>
+
+If you don't want to clutter your top-level namespace, you can instead pass an object as an argument to <code>GlkOte.init</code>. The object can be named anything (or even be an anonymous object). If you do this, the library accepts the object you pass, and doesn't look for a global <code>Game</code>.
+<p>
+
+The game interface object may have the following properties:
+<p>
+
+<pre class="Def">
+Game.accept()
+</pre>
+<p>
+
+This is the only property you <em>must</em> provide. Your <code>Game.accept</code> function receives input events, and responds to them by updating the display. 
+See "<a href="#input">Accepting User Events</a>".
+<p>
+
+<pre class="Def">
+Game.gameport
+</pre>
+<p>
+
+This string defines the id of the <code>gameport</code> element -- the HTML div which contains GlkOte's content. The default value is "gameport". You can set this to something else if your HTML document structure requires the game to be built inside a different div.
+<p>
+
+<pre class="Def">
+Game.windowport
+</pre>
+<p>
+
+This string defines the id of the <code>windowport</code> element -- the HTML div which contains everything that the player sees. The default value is "windowport". You can set this to something else if your HTML document structure requires the game to be built inside a different div.
+<p>
+
+<pre class="Def">
+Game.spacing
+</pre>
+<p>
+
+This value defines the number of pixels of blank space around each window (and also between windows). It is optional, and defaults to zero. 
+See "<a href="#cssspacing">Spacing, borders, and padding</a>".
+<p>
+
+<pre class="Def">
+Game.inspacing, Game.outspacing, 
+Game.inspacingx, Game.inspacingy, Game.outspacingx, Game.outspacingy
+</pre>
+<p>
+
+More precise control of the spacing value. 
+See "<a href="#cssspacing">Spacing, borders, and padding</a>".
+<p>
+
+<pre class="Def">
+Game.detect_external_links, Game.regex_external_links
+</pre>
+<p>
+
+If <code>detect_external_links</code> is set, GlkOte will detect URLs in the displayed text, and turn them into external hyperlinks. <code>regex_external_links</code> allows you to customize the URL detector.
+See "<a href="#extlinks">External hyperlinks</a>".
+<p>
+
+<pre class="Def">
+Game.recording_url, Game.recording_handler,
+Game.recording_format, Game.recording_label
+</pre>
+<p>
+
+If <code>recording_url</code> is set, GlkOte will forward every command (input and output) to that URL as an AJAX JSON POST request. To do something else with the command, you can instead set <code>recording_handler</code> to an arbitrary Javascript function.
+<p>
+
+By default, the sent object (or <code>recording_handler</code> argument) looks like:
+<p>
+
+<pre class="Sample">
+{ "format": "glkote",
+  "input": {<em>input event object; <a href="#input">see above</a></em>},
+  "output": {<em>output update object; <a href="#input">see above</a></em>},
+  "sessionId": "<em>string of digits; identifies game session</em>",
+  "label": "<em>the recording_label parameter, or the game title or URL</em>",
+  "timestamp": <em>Unix timestamp when input received</em>,
+  "outtimestamp": <em>Unix timestamp when output generated</em> }
+</pre>
+<p>
+
+If <code>recording_format</code> is set to <code>"simple"</code>, the <code>"input"</code> and <code>"output"</code> fields will be replaced with plain strings (<code>"output"</code> will contain newlines). In this format, style information is lost, as is the distinction between line and character input, etc.
+<p>
+
+(Regardless of configuration, the player can disable transcript recording by adding <code>?feedback=0</code> to the URL.)
+<p>
+
+<h2><a name="layout">Laying Out Windows</a></h2>
+
+The most painful task your game faces -- well, aside from creating a superior world model and IF English parser -- is placing your windows on the screen. When you define a <code>windows</code> property for <code>GlkOte.update</code>, you must give the position (left and top coordinates) and the size (width and height). But how do you know what they should be?
+<p>
+
+It's easy to say "my status window should be as wide as the gameport". It gets a bit harder when you have to take the <code>Game.spacing</code> into account. When you say "my status window should be tall enough to display one row of characters in its fixed-width font," that's when the headache begins.
+<p>
+
+The information you need to work this stuff out comes from the metrics object. The library provides this to you at startup time (and also when the window is resized). You still have to do some math to make everything work, but let's take a look at...
+<p>
+
+<h3><a name="metrics">The Metrics Object</a></h3>
+
+It contains a bunch of useful numbers. They are all measured in pixels. Some of them come from your game interface object; others are measured by the library, which inspects various elements of the web page.
+<p>
+
+<pre class="Def">
+metrics.width, metrics.height
+</pre>
+<p>
+
+The width and height of the <code>gameport</code> (and also the <code>windowport</code>). Your game windows should fill all of this area, aside from margins and spacing.
+<p>
+
+<pre class="Def">
+metrics.outspacingx, metrics.outspacingy
+</pre>
+<p>
+
+The width and height of the space around the windows -- that is, between the windows and the edge of the <code>gameport</code>. <code>outspacingx</code> is the width of the left and right edges; <code>outspacingy</code> is the height of the top and bottom edges.
+<p>
+
+<pre class="Def">
+metrics.inspacingx, metrics.inspacingy
+</pre>
+<p>
+
+The width and height of the space between adjacent windows. <code>inspacingx</code> is the width of the vertical space between horizontally adjacent windows. <code>inspacingy</code> is the height of the horizontal space between vertically adjacent windows.
+<p>
+
+You define all these spacing values -- they're taken straight from your game interface object. Note that it doesn't matter how you defined them. If you just provided a <code>Game.spacing</code> property, the metrics will still define <code>outspacingx</code>, <code>outspacingy</code>, <code>inspacingx</code>, and <code>inspacingy</code>; they'll just all be the same number. If you don't define any spacing at all, all four properties in the metrics will be zero.
+<p>
+
+<pre class="Def">
+metrics.gridcharwidth, metrics.gridcharheight
+</pre>
+<p>
+
+The size of a single character in the grid window's normal font. (Note that these are not necessarily integers. In particular, <code>gridcharwidth</code> is a fractional value in many modern browsers.)
+<p>
+
+<pre class="Def">
+metrics.gridmarginx, metrics.gridmarginy
+</pre>
+<p>
+
+The amount of space consumed by a grid window <em>aside</em> from the characters it contains. <code>gridmarginx</code> is the total width of the left and right padding, the left and right border, and so on. <code>gridmarginy</code> is the same for the top and bottom.
+<p>
+
+The idea is that you can find the total width required for a grid window by computing <code class="Inline">(columns * gridcharwidth + gridmarginx)</code>. And the total height is <code class="Inline">(rows * gridcharheight + gridmarginy)</code>.
+<p>
+
+<pre class="Def">
+metrics.buffercharwidth, metrics.buffercharheight
+</pre>
+<p>
+
+The character measurements for buffer windows. Of course, since buffer windows typically have propertional-width fonts, the <code>buffercharwidth</code> is only an approximation. Even the <code>buffercharheight</code> can be inaccurate, since you can define buffer styles with different font sizes. (The measurements are made on digits in the normal buffer font style. Digits are fixed-width in most fonts.)
+<p>
+
+<pre class="Def">
+metrics.buffermarginx, metrics.buffermarginy
+</pre>
+<p>
+
+The extra space consumption for buffer windows.
+<p>
+
+<pre class="Def">
+metrics.graphicsmarginx, metrics.graphicsmarginy
+</pre>
+<p>
+
+The extra space consumption for graphics windows.
+<p>
+
+<h3><a name="layoutmath">Doing the Math</a></h3>
+
+A single window that fills the port is easy:
+<p>
+
+<pre class="Sample">
+{ left: metrics.outspacingx,
+  top: metrics.outspacingy,
+  width: metrics.width-(2*metrics.outspacingx),
+  height: metrics.height-(2*metrics.outspacingy) }
+</pre>
+<p>
+
+The outspacing surrounds the window on all four sides, and so the width and height are each diminished by twice the spacing value.
+<p>
+
+(You don't have to give <code>bottom</code> or <code>right</code> values. However, the implicit rules are, for each window:
+<p>
+
+<pre class="Sample">
+metrics.width = (width + left + right)
+metrics.height = (height + top + bottom)
+</pre>
+<p>
+
+In the one-window case, the <code>left</code> and <code>right</code> values are both <code>metrics.outspacingx</code>; the <code>top</code> and <code>bottom</code> values are both <code>metrics.outspacingy</code>.)
+<p>
+
+If this were a grid window, how many rows and columns would it have? (We need to supply these as the <code>gridwidth</code> and <code>gridheight</code> in the window definition.) We've just computed the window's width and height, but those values include the <code>gridmarginx</code> and <code>gridmarginy</code> -- the extra space consumed by the window padding and border. We have to subtract those off before dividing by the character size.
+<p>
+
+<pre class="Sample">
+{ &lt;see above&gt;..., 
+  gridwidth:  Math.floor((width-metrics.gridmarginx)
+                         / metrics.gridcharwidth),
+  gridheight: Math.floor((height-metrics.gridmarginy)
+                         / metrics.gridcharheight) }
+</pre>
+<p>
+
+(The <code>gridwidth</code> and <code>gridheight</code> have to be integers, so we round down with <code>Math.floor</code>.)
+<p>
+
+To create a window that <em>doesn't</em> stretch the full height of the port, we need to do a little more work. Say we want a three-line-height status window. This would look like:
+<p>
+
+<pre class="Sample">
+{ left: metrics.outspacingx,
+  top: metrics.outspacingy,
+  width: metrics.width-(2*metrics.outspacingx),
+  height: 3*metrics.gridcharheight + metrics.gridmarginy,
+  gridwidth: Math.floor((width-metrics.gridmarginx)
+                        / metrics.gridcharwidth),
+  gridheight: 3 }
+</pre>
+<p>
+
+The left and width parameters have not changed. The height is now defined as three times the character height, plus the extra space needed by the <code>gridmarginy</code>. And the <code>gridheight</code>, of course, is three.
+<p>
+
+Naturally we want a story window below this three-line status window. Where does it go?
+<p>
+
+<pre class="Sample">
+var storytop = (metrics.outspacingy
+    + (3*metrics.gridcharheight+metrics.gridmarginy)
+    + metrics.inspacingy)
+</pre>
+<p>
+
+The <code>top</code> coordinate of this window is the sum of everything that lies above it: the outer spacing, plus the full height of the status window, plus the inner spacing. (The inner spacing, remember, is the measurement between the two windows.)
+<p>
+
+With this in hand, we can define the story window:
+<p>
+
+<pre class="Sample">
+{ left: metrics.outspacingx, top: storytop,
+  width: metrics.width-(2*metrics.outspacingx),
+  height: metrics.height-(storytop+metrics.outspacingy) }
+</pre>
+<p>
+
+The height value comes straight from the rules mentioned above; the implicit <code>bottom</code> value is <code>metrics.outspacingy</code>
+<p>
+
+<h3><a name="layoutwhy">And Why?</a></h3>
+
+Why is all this work foisted off on you? Basically, because <a href="http://eblong.com/zarf/glk/remglk/docs.html">RemGlk</a> does it.
+<p>
+
+RemGlk contains code to compute all the window sizes, based on the constraint mechanisms of the Glk API. It gets all of the math right, and then passes it on to GlkOte. This means that GlkOte doesn't contain any math cleverness.
+<p>
+
+One could imagine rewriting that constraint code in Javascript, and including it in GlkOte as a helper function. Pure Javascript games could use this helper (thus getting perfect windows without any effort), while RemGlk would just bypass it. This is probably the right way to do things, but I haven't done it. Yet. Sorry.
+<p>
+
+<h2><a name="css">Customizing Your Stylesheet</a></h2>
+
+Since your game is built in HTML, most (not quite all) of its appearance is controlled by 
+<a href="http://www.w3.org/TR/REC-CSS2/">CSS styles</a>. 
+The defaults come from the 
+<code><a href="glkote.css">glkote.css</a></code> file, 
+included in the GlkOte library. You can either modify this file on your web site, include an additional CSS file in your page, or put CSS styles directly in your page header.
+<p>
+
+Most of <code>glkote.css</code> is free for you to play with. However, some elements should be left alone, lest you break GlkOte's assumptions. In general, you can freely modify appearance properties -- color, fonts, text styles and sizes. You must be more careful with layout properties -- position, width, height, margin, and so on. Do not mess with these unless this document says it's safe.
+<p>
+
+(The <code><a href="glkote-demo2.css">glkote-demo2.css</a></code> file is an example of a modified stylesheet. You can see its effects in the <code><a href="sample-demo2.html">sample-demo2.html</a></code> demo.)
+<p>
+
+<h3><a name="cssgameport">The contents of the <code>gameport</code></a></h3>
+
+To play with your CSS, you have to know the structure of GlkOte's document. Let's crack it open:
+<p>
+
+<pre class="Sample">
+&lt;div id="gameport"&gt;
+  &lt;div id="windowport"&gt;
+     <em>...windows...</em>
+  &lt;div id="loadingpane"&gt;
+  &lt;div id="errorpane"&gt;
+</pre>
+<p>
+
+The <code>gameport</code> is the box that contains all of GlkOte's functionality. You place the <code>gameport</code> on your page, and GlkOte does all its work inside it. This is the big exception to the rule abot layout properties. You can position <code>gameport</code> by any means: set its width and height (or max-width, or left and right), apply borders and margins, anything you want. Just make sure that <code>gameport</code>'s size is completely determined by your CSS properties. GlkOte fits its content inside the <code>gameport</code>; it does not expand the <code>gameport</code> to fit the content.
+<p>
+
+The appearance properties of the <code>gameport</code> are mostly irrelevant, since no text appears directly in it. However, you may wish to customize its <code>background</code> color. This is the color that appears around windows, and between them, if you set a non-zero window spacing. 
+(See "<a href="#cssspacing">Spacing, borders, and padding</a>".)
+<p>
+
+There are three divs stacked inside <code>gameport</code>:
+<p>
+
+The <code>windowport</code> contains all of the game windows -- everything the player sees in the normal course of play. It is the same size as the <code>gameport</code>. We will discuss it further in a moment.
+<p>
+
+The <code>loadingpane</code> contains the spinny compass and the sign "Loading..." This div is hidden (CSS property <code>display:none</code>) the first time you call <code>GlkOte.update</code>, so it won't be bothering you.
+<p>
+
+The <code>errorpane</code> is a red-bordered panel which appears at the top of the <code>gameport</code> when a fatal error occurs. Until that happens, it is hidden, so it won't be bothering you either.
+<p>
+
+You should not modify the CSS positioning of <code>windowport</code>, <code>loadingpane</code>, or <code>errorpane</code>. You may modify their appearance, if you want.
+<p>
+
+<h3><a name="csswindowport">The contents of the <code>windowport</code></a></h3>
+
+Here is a typical Infocom-style IF game. It has a status window (grid format, two lines high) and a story window (buffer format).
+<p>
+
+<pre class="Sample">
+&lt;div id="windowport"&gt;
+  &lt;div id="window1" class="WindowFrame GridWindow WindowRock_123"&gt;
+    &lt;div id="win1_ln0" class="GridLine"&gt;
+    &lt;div id="win1_ln1" class="GridLine"&gt;
+  &lt;div id="window2" class="WindowFrame BufferWindow WindowRock_456"&gt;
+    &lt;div class="BufferLine"&gt;
+    &lt;div class="BufferLine"&gt;
+    &lt;div class="BufferLine"&gt;
+    &lt;div class="BufferLine"&gt;
+</pre>
+<p>
+
+Each window is a div, absolutely positioned in the <code>windowport</code>. The <code>id</code> of the window identifies it, using the integer identifier you created it with.
+<p>
+
+As you see, each window has <em>three</em> CSS classes. <code>WindowFrame</code> is a general class which applies to all windows. <code>GridWindow</code>, <code>BufferWindow</code>, or <code>GraphicsWindow</code> identifies the format of the window; you can use these classes to adjust the properties of all windows of a given type. (For example, the default stylesheet ensures that grid windows have a fixed-width font by putting <code>font-family: monospace</code> in the <code>GridWindow</code> class definition.)
+<p>
+
+The <code>WindowRock_...</code> class identifies the window by the rock value you created it with. (If you didn't give a rock, it gets the class <code>WindowRock_undefined</code>.) You can use this to adjust the appearance of a single window.
+<p>
+
+Or, you could use the <code>id</code> value. Why does the rock value exist? If you're writing your game in pure Javascript, there isn't much reason -- the <code>id</code> and the rock serve the same function. However, if you're using a library such as RemGlk, you probably have no control over the <code>id</code> value. That's chosen by the library; it may not be the same from one game to the next; and it will never be reused within a game. (That is, if RemGlk closes a window and then reopens it, the new one will have a different <code>id</code>.) The rock value is always under your control.
+<p>
+
+<h3><a name="csslines">Lines of text</a></h3>
+
+Each window div contains a series of lines. (In the case of a buffer window, a "line" is really a full paragraph.) You can adjust the styles of the <code>GridLine</code> and <code>BufferLine</code> classes, but this doesn't really let you do anything you couldn't do with <code>GridWindow</code> and <code>BufferWindow</code>.
+<p>
+
+Each line div contains a series of spans. Each span has a class indicating its style. <code>Style_normal</code> for normal text, or <code>Style_header</code>, <code>Style_emphasized</code>, or so on -- whatever style you specified when you updated the window. You can adjust the appearance of each style class as you wish.
+<p>
+
+Since grid windows are grids, you must make sure that <em>all</em> styles in <em>all</em> grid windows are monospaced fonts. Equally importantly, they must all be the same point size. (You cannot have one grid window with a 18-point font, and another with a 14-point font.) It is safest to set the <code>font-family</code> and <code>font-size</code> in the <code>GridWindow</code> class, and not touch them in individual style classes. If you want to change the font size of a buffer window style, use a combined selector to ensure that you don't disturb the grids:
+<p>
+
+<pre class="Sample">
+.BufferWindow .Style_header { font-size: 14px; }
+</pre>
+<p>
+
+Because style classes only apply to spans, not divs, there is currently no way to change the <code>text-align</code> or <code>text-indent</code> of a style. This is a bug. (You can still set these properties on an entire window.)
+<p>
+
+<h3><a name="extlinks">External hyperlinks</a></h3>
+
+You can configure GlkOte to detect URLs in the displayed text, and turn them into external hyperlinks. Since this can affect the display of existing games, GlkOte does not do this by default. You must turn on the feature by adding a <code>detect_external_links</code> property on your 
+<a href="#gameinterface">game interface object</a>:
+<p>
+
+<pre class="Sample">
+Game = {
+  accept: accept,
+  detect_external_links: 'search'
+};
+</pre>
+<p>
+
+The value of the property controls the behavior of the URL detection. You have two choices:
+<p>
+
+<pre class="Def">
+detect_external_links: 'search'
+</pre>
+<p>
+
+Any URL in the output text is detected, as long as it's not split by a newline, space, or style change. Each URL will be displayed as a hyperlink with class <code>External</code> and target <code>_blank</code>. (The <code>_blank</code> ensures that the linked page will open in a new window.)
+<p>
+
+Note that this just linkifies URLs; you cannot use this feature to apply an external hyperlink to an arbitrary word. Also, this external URL feature is completely separate from Glk's hyperlink feature. Glk hyperlinks are discussed under <a href="#contentupdate">The Content Update Array</a>. A span of text which is marked as a Glk hyperlink cannot also be an external hyperlink.
+<p>
+
+<p>
+
+The regex employed for the <code>'search'</code> detector is this terrifying agglomeration:
+<p>
+
+<pre class="Sample">
+\b((?:https?://)(?:[^\s()&lt;&gt;]+|\(([^\s()&lt;&gt;]+|(\([^\s()&lt;&gt;]+\)))*\))+
+(?:\(([^\s()&lt;&gt;]+|(\([^\s()&lt;&gt;]+\)))*\)
+|[^\s`!()\[\]{};:'".,&lt;&gt;?\u00ab\u00bb\u201c\u201d\u2018\u2019]))
+</pre>
+<p>
+
+This basically looks for any URL-like string beginning with <code>http:</code> or <code>https:</code>, ignoring case. The complications come from being smart about closing punctuation; if a URL appears in a sentence, followed by a period, it will try to exclude the period. This is derived from <a href="http://daringfireball.net/2010/07/improved_regex_for_matching_urls">John Gruber's URL regex</a> (the "web URL only" variant). I made one change: unlike Gruber's, this does <em>not</em> attempt to recognize bare domain names like <code>www.eblong.com</code>.
+<p>
+
+If you want to customize the regex, you can assign a new regex object to the <code>regex_external_links</code> property on your game interface. You can use any regex, as long as it doesn't try to accept the empty string; whatever it accepts will be treated as a URL. (Do not use the <code>'g'</code> global-search flag for this regex. GlkOte is able to detect multiple URLs in a line anyway.)
+<p>
+
+<pre class="Def">
+detect_external_links: 'match'
+</pre>
+<p>
+
+The <code>'match'</code> detector is a much simpler and faster test, but it can only detect a URL which is a <em>complete span</em> in the output. Therefore, for a game to take advantage of this feature, you must either print the URL on a line by itself, or you must change the style immediately before and after the URL. (Either way, you must exclude all leading and trailing spaces and punctuation.) In Inform 7, for example, you might write:
+<p>
+
+<pre class="Sample">
+say "Please see [fixed letter spacing]http://eblong.com/[variable
+  letter spacing].";
+</pre>
+<p>
+
+This detector uses the regex <code>/^https?:.*$/i</code> -- any string beginning with <code>http:</code> or <code>https:</code>, ignoring case. Again, you may customize this by setting the <code>regex_external_links</code> property on your game interface object. Your regex must match at the start of the string (start with <code>^</code>); otherwise you will get surprisingly wrong results.
+<p>
+
+<h3><a name="cssinput">The input field</a></h3>
+
+All input fields are <code>&lt;input type="text"&gt;</code> elements. Line input fields have the <code>Input</code> and <code>LineInput</code> CSS classes; character input fields have <code>Input</code> and <code>CharInput</code>.
+<p>
+
+The default stylesheet makes an input field as invisible as possible; no highlighting, border, or background color. This is the usual style for IF.
+<p>
+
+In a grid window, the input field is a child of the <code>GridWindow</code> div; it is absolutely positioned to the proper spot in the window. In a buffer window, the input field is contained in the last <code>BufferLine</code>. (Not in one of the style spans, but in a special <code>InvisibleCursor</code> span.) A buffer input field may be relatively or absolutely positioned, depending on which I could get to work right in a given browser.
+<p>
+
+<h3><a name="cssspacing">Spacing, borders, and padding</a></h3>
+
+CSS provides several ways to push boxes away from each other. Here is a quick rundown of how they work, and how they relate to GlkOte windows.
+<p>
+
+The first rule is, do not set the CSS <code>margin</code> property on GlkOte windows. The library cannot account for margins; your windows will come out the wrong size.
+<p>
+
+Rather than using CSS to space your windows apart, you will have to set a <code>spacing</code> property on your 
+<a href="#gameinterface">game interface object</a>. 
+The property <code>spacing:4</code>, for example, will leave a four-pixel margin around each window, and also between windows. If you want to control those values separately, you can set <code>outspacing</code> (the outer margins around the windows) and <code>inspacing</code> (the margins between adjacent windows). For even finer control, you can set <code>outspacingx</code> and <code>inspacingx</code> (the width of left and right margins) and <code>outspacingy</code> and <code>inspacingy</code> (the height of top and bottom margins).
+<p>
+
+The color of these margins, between and around your windows, is the <code>background</code> color of the <code>gameport</code>. Or the <code>background</code> color of the <code>windowport</code>, if that is set.
+<p>
+
+A window can have a CSS <code>border</code> property. You specify the width, color, and style as part of the property value. For example, <code class="Inline">border: 2px solid red</code> would put a two-pixel red line around the window. (See the CSS spec for complete details.) If you specify both a spacing and a border, the spacing is measured from the outer edge of the border.
+<p>
+
+A window can also have a CSS <code>padding</code> property. This is the distance between the inner edge of the border (if any) and the window content -- the text in the window. (This padding space is the same color as the window background. For graphics windows, that means it will start out white.) The default stylesheet defines a fair bit of padding; you don't want to skimp on it.
+<p>
+
+<em>Within</em> a window -- that is, within lines of text -- you are free to adjust the spacing however you want. The <code>letter-spacing</code> and <code>line-height</code> properties are safe. You can set <code>margin</code> values on <code>BufferLine</code>, but don't try it on <code>GridLine</code>.
+<p>
+
+By the way, in a buffer window, paragraphs of text are separated by blank lines -- that is, empty paragraphs. (More precisely, a blank line is a paragraph with a single non-breaking space in it, so that it doesn't collapse.) This is unlike the normal HTML model, in which paragraphs are <code>&lt;p&gt;</code> tags separated by the CSS <code>margin</code> property.
+<p>
+
+(If you think that's ugly, don't ask what I had to do to prevent runs of spaces from collapsing.)
+<p>
+
+<h2><a name="version">GlkOte Version History</a></h2>
+
+<dl>
+
+<dt>Release 2.2.### (###)
+<dd>Updated Electron support to use current dialog API.
+
+<dt>Release 2.2.5 (Mar 29, 2020)
+<dd>Increased the font sizes in the default stylesheet.
+<dd>Changed the whitespace handling in buffer windows to use CSS (<code>white-space:pre-wrap</code>) instead of <code>&amp;nbsp;</code>. This will break on very old versions of IE, but we're not fussed about them any more.
+<dd>Added a check to prevent the library from sending two events from the same generation. (Unless it's a <code>'refresh'</code>.)
+<dd>Added an option to delay game launch by a tiny fraction, giving fonts time to load. (In general you don't need this. Lectrote does, because of the way it handles font preferences.)
+<dd>Changed the transcript display pane to a <code>&lt;pre&gt;</code> tag, to work around a Firefox copy-paste bug.
+<dd>A change to input line handling which might reduce keyboard flicker on Android.
+<dd>The glk_stream_open_file() function now silently returns null on file-not-found. (This is the documented behavior, but my interpreters have historically wrongly thrown an error.)
+<dd>Fixed variable declarations to support JS-strict mode.
+<dd>Added a warning to the Save dialog, saying that browser storage can be erased by clearing cookies or by browser privacy policies.
+
+<dt>Release 2.2.4 (Jan 23, 2017)
+<dd>Added the <code>support</code> array to the initial (<code>'init'</code>) update request. (Earlier versions of GlkOte supported graphics and hyperlinks -- see below -- but omitted the <code>support</code> field.)
+<dd>Added a way to request timer events. (In previous versions, the game had to manage its own timers.)
+<dd>Test localStorage functionality; if not available, fall back to Javascript memory.
+<dd>Added gi_debug.js, a library which provides a debug console. (Not loaded into the demo pages.)
+
+<dt>Release 2.2.3 (Oct 26, 2016)
+<dd>Support the case of autosaving a game format with no <code>ram</code> array. (For Ink/Lectrote.)
+<dd>Restore support for old browsers that lack matchMedia().
+<dd>Fix for graphics windows being drawn with a slight extra lower margin.
+<dd>Detect size changes of the gameport (even if the window does not change size) and fire the appropriate rearrange event.
+<dd>Update to jQuery 1.12.4.
+
+<dt>Release 2.2.2 (June 23, 2016)
+<dd>When MORE paging, display a margin mark at the last-seen position.
+<dd>Graphics windows now display scaled	images at full screen resolution on all browsers. (Previously, Counterfeit Monkey on a Retina display in Chrome was fuzzy.)
+<dd>Hooks for accepting custom external events.
+<dd>Tolerate foreign text-input widgets in the document if they have the "CanHaveInputFocus" class.
+
+<dt>Release 2.2.1 (March 11, 2016)
+<dd>Fixed a bug where the MORE prompt could get stuck (particularly when you use browser-view zoom).
+<dd>Added support for full-state autosave and autorestore.
+
+<dt>Release 2.2.0 (February 5, 2016)
+<dd>Added support for the Electron.io environment, where we can read and write real files.
+<dd>Added the <code>GlkOte.warning</code> API, to display temporary or non-alarming status messages.
+<dd>Adjusted the error/warning pane to be translucent on hover, so that it cannot completely hide critical game text.
+<dd>Changed the behavior of unicode files in local storage. They are now byte arrays (UTF8 or BE32) instead of unichar arrays. Legacy saved files will not read back correctly. This only affects files created with glk_stream_open_file_uni(), so it does <em>not</em> affect saved games.
+<dd>Fixed a bug where hyperlinks set on images (in text) would not work.
+
+<dt>Release 2.1.1 (November 22, 2015)
+<dd>Added basic WAI-ARIA support to buffer windows.
+<dd>Fixed a bug where setting a graphics window's color and then clearing it (in the same turn) would fail.
+
+<dt>Release 2.1.0 (April 24, 2015)
+<dd>Support graphics windows and image display. Thanks to Alex Munroe for original implementation.
+<dd>Support mouse input in text grid and graphics windows.
+<dd>Generate the layout test pane at runtime, so it doesn't have to be in the HTML.
+<dd>Added the ability to send transcript data to an external server.
+<dd>Added a feature to do DOM work within a particular DOM context, which can then be detached.
+
+<dt>Release 2.0.0 (February 12, 2015)
+<dd>Switched from Prototype over to jQuery.
+<dd>Switched from my old ad-hoc license to the MIT license.
+<dd>Added the ability to download a saved-game file.
+<dd>Increased the font size in the included CSS stylesheets.
+<dd>When Unicode characters are written to a byte stream, store question marks rather than just trimming to 8 bits.
+
+<dt>Release 1.3.1 (January 3, 2013)
+<dd>Allowed localstorage access to degrade gracefully on Firefox if cookies are disabled.
+
+<dt>Release 1.3.0 (May 7, 2012)
+<dd>Added stubs for the Glk 0.7.3 sound functions.
+<dd>Added the Glk 0.7.4 resource-stream functions.
+<dd>Added a feature to detect URLs and turn them into external hyperlinks. (This is not turned on by default.)
+<dd>Added an "Edit" button to the load/save dialog. This allows you to browse, delete, and display stored files.
+<dd>Fixed a bug whereby glk_cancel_hyperlink_event() did not work (in fact, turned hyperlink events on rather than off).
+<dd>Defined an update/accept interchange for the file selection dialog.
+<dd>Added a simpler demo for people to extend.
+
+<dt>Release 1.2.3 (February 17, 2011)
+<dd>Support for Glk 0.7.2 -- the date-and-time feature.
+<dd>Fixed a bug in Unicode normalization (thanks David Fletcher).
+
+<dt>Release 1.2.2 (January 22, 2011)
+<dd>Support for all the Glk 0.7.1 features: window borders, line input
+terminator keys, line input echo control, Unicode normalization.
+
+<dt>Release 1.2.1 (October 14, 2010)
+<dd>Adjusted the sample HTML to look better on iPhone and other small displays.
+<dd>Improved iPhone/Android input behavior.
+
+<dt>Release 1.2.0 (July 28, 2010)
+<dd>Long output is now paged with a "More" prompt in the bottom corner of the window.
+<dd>Ensure that windows don't come out with negative sizes on IE.
+
+<dt>Release 1.1.1 (July 4, 2010)
+<dd>Improved the dialog box layout; it is now horizontally centered.
+<dd>Fixed a small bug in the sample-demo2.html CSS.
+
+<dt>Release 1.1.0 (July 1, 2010)
+<dd>Added glkapi.js (a pure-Javascript Glk API which runs on top of GlkOte).
+<dd>Added dialog.js (a library which can display "file" dialogs and save data to browser storage).
+<dd>Added support for Glk-style hyperlinks.
+<dd>Added <code>extevent()</code> and <code>interface()</code> calls. Added <code>disable</code> flag to the <code>update()</code> call.
+<dd>Allowed LINE_DATA_ARRAY to be specified in a more flexible way (for hyperlinks).
+<dd>Upgraded Prototype library to 1.6.1.
+<dd>Added an example of a modified stylesheet.
+
+<dt>Release 1.0.0 (June 27, 2008)
+<dd>Original release.
+
+</dl>
+
+<hr>
+Last updated March 29, 2020.
+<p>
+
+<em><a href="http://eblong.com/zarf/glk/glkote.html">GlkOte home page</a>
+--
+<a href="http://eblong.com/zarf/glk/index.html">Glk home page</a></em>
+<p>
+
+</body>
+</html>

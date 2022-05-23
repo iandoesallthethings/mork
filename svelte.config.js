@@ -13,7 +13,13 @@ const config = {
 					name: 'sveltekit-socket-io',
 					configureServer: configureWebsocket
 				}
-			]
+			],
+			resolve: {
+				alias: {
+					$lb: 'src/lib',
+					$components: 'src/components'
+				}
+			}
 		}
 	}
 }

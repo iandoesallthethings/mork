@@ -1,0 +1,56 @@
+/*
+
+GlkOte core styles
+==================
+
+Copyright (c) 2022 Dannii Willis
+MIT licenced
+https://github.com/curiousdannii/asyncglk
+
+*/
+
+/* Base black on white styles, see light.css for something nicer */
+:root {
+    --glkote-buffer-bg: #fff;
+    --glkote-buffer-fg: #000;
+    --glkote-buffer-reverse-bg: #000;
+    --glkote-buffer-reverse-fg: #fff;
+    --glkote-buffer-size: 15px;
+    --glkote-grid-bg: #fff;
+    --glkote-grid-fg: #000;
+    --glkote-grid-mono-family: monospace;
+    --glkote-grid-reverse-bg: #000;
+    --glkote-grid-reverse-fg: #fff;
+    --glkote-grid-size: 14px;
+    --glkote-input-fg: #300000;
+    --glkote-mono-family: monospace;
+    --glkote-prop-family: serif;
+}
+
+#windowport {
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
+
+#loadingpane {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 20%;
+}
+
+/* Make the test pane render invisibly */
+#layout_test_pane {
+    position: absolute;
+    top: 0;
+    visibility: hidden;
+}
+
+/* iOS 15: When the virtual keyboard is active, the URL bar is not correctly accounted for in visualViewport.height
+   https://bugs.webkit.org/show_bug.cgi?id=229876
+   Should be fixed in iOS 15.1
+   Account for it by adding some padding to the #gameport */
+.ios15fix {
+    padding-bottom: 55px;
+}

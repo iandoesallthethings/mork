@@ -2,7 +2,7 @@
 	"name": "multi-parchment",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "svelte-kit dev",
+		"dev": "svelte-kit dev --host",
 		"build": "svelte-kit build",
 		"build:svelteconfig": "esbuild svelte.config.ts --outfile=svelte.config.js",
 		"package": "svelte-kit package",
@@ -12,7 +12,11 @@
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
-		"format": "prettier --write --plugin-search-dir=. ."
+		"format": "prettier --write --plugin-search-dir=. .",
+		"sync": "svelte-kit sync",
+		"build:parchment": "./build.js",
+		"inform7": "tools/package-inform7.sh",
+		"link-local-emglken": "npm link ./src/upstream/emglken"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.21.0",
@@ -33,7 +37,11 @@
 		"svelte-preprocess": "^4.10.5",
 		"tailwindcss": "^3.0.23",
 		"tslib": "^2.3.1",
-		"typescript": "~4.6.2"
+		"typescript": "~4.6.2",
+		"esbuild": "^0.14.34",
+		"eslint-plugin-compat": "^4.0.0",
+		"http-server": "^14.0.0",
+		"minimist": "^1.2.6"
 	},
 	"type": "module",
 	"dependencies": {
@@ -41,6 +49,13 @@
 		"esbuild": "^0.14.39",
 		"socket.io": "^4.5.1",
 		"socket.io-client": "^4.5.1",
-		"ts-node": "^10.8.0"
+		"ts-node": "^10.8.0",
+		"emglken": "^0.3.3",
+		"jquery": "^3.6.0",
+		"lodash-es": "^4.17.21"
+	},
+	"browser": {
+		"fs": false,
+		"path": false
 	}
 }

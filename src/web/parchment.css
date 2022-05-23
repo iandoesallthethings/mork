@@ -1,0 +1,32 @@
+#gameport {
+	background: var(--glkote-page-bg);
+	bottom: 0px;
+	left: 0px;
+	margin: 0 auto;
+	max-width: 900px;
+	overflow: hidden;
+	height: 100%;
+}
+
+#about {
+	text-align: center;
+}
+
+#custom-file-upload {
+	/* display: none; */
+	cursor: pointer;
+	text-decoration: underline;
+	color: blue;
+}
+
+#play-url {
+	/* display: none; */
+}
+
+#play-url-input {
+	width: 250px;
+}
+
+#footer-date {
+	width: 100%;
+}

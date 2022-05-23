@@ -8,13 +8,28 @@ export function configureWebsocket(server) {
 	io.on('connection', (socket) => {
 		const userId = 'User' + Math.round(Math.random() * 999999)
 		let username = ''
-		commands[userId] = ''
-		console.log(`${userId} joined the game!`)
+
+		commands[userId] = { userId, username: '', text: '' }
 		socket.emit('name', userId)
 
+		console.log(`${userId} joined the game!`)
+
+		refreshCommands()
+
+		socket.on('username', updateUsername)
 		socket.on('message', broadcastMessage)
 		socket.on('queueCommand', queueCommand)
 		socket.on('disconnect', leaveGame)
+
+		function updateUsername(newUsername) {
+			username = newUsername
+			commands[userId].username = newUsername
+			refreshCommands()
+		}
+
+		function refreshCommands() {
+			io.emit('commands', commands)
+		}
 
 		function broadcastMessage(message) {
 			username = message.username || ''
@@ -23,15 +38,13 @@ export function configureWebsocket(server) {
 		}
 
 		function queueCommand(command) {
-			const id = command.userId
-			commands[id] = command.text
-
-			io.emit('commands', commands)
+			commands[userId] = { userId, username, text: command.text }
+			refreshCommands()
 		}
 
 		function leaveGame(reason) {
 			delete commands[userId]
-			io.emit('commands', commands)
+			refreshCommands()
 			console.log(`${username} left the game: ${reason}`)
 		}
 	})

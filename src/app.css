@@ -3,11 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+	/* background-color: black;
+	color: white; */
+}
+
 h1,
 h2,
 h3,
 h4 {
-	@apply mt-8;
+	@apply mt-4 mb-2;
 }
 
 h1 {

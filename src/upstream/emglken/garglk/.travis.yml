@@ -1,0 +1,38 @@
+dist: bionic
+sudo: required
+
+language: generic
+
+addons:
+  apt:
+    packages:
+      - jam
+      - binutils-mingw-w64-i686
+      - gcc-mingw-w64-i686
+      - g++-mingw-w64-i686
+      - gcc-6
+      - g++-6
+      - libsdl1.2-dev
+      - libsdl-mixer1.2-dev
+      - libsdl-sound1.2-dev
+      - libgtk2.0-dev
+      - libspeechd-dev
+
+script:
+  - jam -dx -sC++=$CXX -sCC=$CC -sUSETTS=yes -j4
+
+matrix:
+  include:
+    # MinGW
+    - env: CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ OS=MINGW MINGWARCH=i686-w64-mingw32 CROSS=1
+    # GCC
+    - env: CC=gcc-6 CXX=g++-6
+    - env: CC=gcc-7 CXX=g++-7
+    # Clang
+    - env: CC=clang CXX=clang++
+    # OS X
+    - os: osx
+      before_install:
+        - brew update
+        - brew install sdl sdl_mixer sdl_sound smpeg libvorbis jam
+      script: sh gargoyle_osx.sh
