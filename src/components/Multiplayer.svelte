@@ -21,6 +21,7 @@
 
 		io.on('name', (name) => (userId = name))
 		io.on('commands', (newCommands) => (commands = newCommands))
+		// io.on('')
 	})
 
 	function sendMessage() {
@@ -32,26 +33,33 @@
 	}
 
 	function submitCommand() {
-		commandText = commandText.trim()
 		if (!commandText) return
-
-		io.emit('command', { text: commandText })
+		io.emit('command', { text: commandText.trim() })
 		commandText = ''
 	}
 
+	let lineInput: Element
+
 	function queueCommand() {
+		if (!lineInput) lineInput = document.getElementsByClassName('LineInput')[0]
+		else lineInput.value = commandText
 		io.emit('queueCommand', { text: commandText.trim() })
 	}
 
 	function updateUsername() {
 		io.emit('username', username)
 	}
+
+	function submitCommandIfKeyIsEnter(event: KeyboardEvent) {
+		if (event.key !== 'Enter') return event.stopPropagation()
+		submitCommand()
+	}
 </script>
 
 <h3>Chat</h3>
 <div id="messages">
-	{#each messages as message}
-		<div class="message" transition:fade|local={{ duration: 250 }}>
+	{#each messages as message, index (message)}
+		<div class="message message-{index}" transition:fade|local={{ duration: 250 }}>
 			<div class="info">{message.username || message.userId} - {distanceFromNow(message.time)}</div>
 			<div class="message-text">{message.text}</div>
 		</div>
@@ -59,7 +67,7 @@
 </div>
 
 <form action="#" on:submit|preventDefault={sendMessage}>
-	<textarea bind:value={messageText} placeholder="Chat" />
+	<textarea bind:value={messageText} placeholder="Chat" on:keydown|stopPropagation />
 	<div>
 		<button type="submit">send</button>
 		as
@@ -67,7 +75,8 @@
 			type="text"
 			bind:value={username}
 			placeholder={userId}
-			on:input|preventDefault={updateUsername}
+			on:input={updateUsername}
+			on:keydown|stopPropagation
 			class="px-2 border rounded-md"
 		/>
 	</div>
@@ -80,7 +89,12 @@
 	{/each}
 </div>
 
-<form action="#" on:submit|preventDefault={submitCommand} on:input|preventDefault={queueCommand}>
+<form
+	action="#"
+	on:submit|preventDefault={submitCommand}
+	on:input|preventDefault={queueCommand}
+	on:keydown={submitCommandIfKeyIsEnter}
+>
 	<textarea id="command" bind:value={commandText} placeholder="Command" />
 </form>
 
