@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Message, Command, CommandQueue } from '$lib/types'
+	import type { Message, User } from '$lib/types'
 	import { onMount } from 'svelte'
 	import io from '$lib/socketClient'
 	import { fade } from 'svelte/transition'
@@ -7,11 +7,11 @@
 
 	let userId = ''
 	let username = ''
-	let messageText = ''
-	let commandText = ''
+	let message = ''
+	let command = ''
+	let users: User[] = []
 
 	let messages: Message[] = []
-	let commands: CommandQueue = {}
 
 	onMount(() => {
 		io.on('message', (message) => {
@@ -19,87 +19,103 @@
 			messages = [...messages, message]
 		})
 
-		io.on('name', (name) => (userId = name))
-		io.on('commands', (newCommands) => (commands = newCommands))
-		// io.on('')
+		io.on('issueId', (id) => (userId = id))
+
+		io.on('usernameUpdated', (newUsername) => {
+			username = newUsername
+		})
+
+		io.on('updateUsers', (newUsers) => {
+			users = newUsers
+		})
+
+		io.on('updateCommand', (newCommand) => {
+			command = newCommand
+			injectCommandToGame()
+		})
+
+		io.on('submitCommand', (submittedCommand) => {
+			injectCommandToGame(submittedCommand)
+			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+		})
 	})
 
+	function messageKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' && !event.shiftKey) sendMessage()
+	}
+
 	function sendMessage() {
-		messageText = messageText.trim()
-		if (!messageText) return
+		message = message.trim()
+		if (!message) return
 
-		io.emit('message', { username, text: messageText })
-		messageText = ''
+		io.emit('message', { username, text: message })
+		message = ''
 	}
 
-	function submitCommand() {
-		if (!commandText) return
-		io.emit('command', { text: commandText.trim() })
-		commandText = ''
-	}
+	let lineInput: HTMLInputElement
+	function injectCommandToGame(commandText: string | undefined = undefined) {
+		if (!lineInput) lineInput = document.getElementsByClassName('LineInput')[0] as HTMLInputElement
 
-	let lineInput: Element
-
-	function queueCommand() {
-		if (!lineInput) lineInput = document.getElementsByClassName('LineInput')[0]
-		else lineInput.value = commandText
-		io.emit('queueCommand', { text: commandText.trim() })
+		if (lineInput) lineInput.value = commandText || command
 	}
 
 	function updateUsername() {
-		io.emit('username', username)
+		io.emit('updateUsername', username)
 	}
 
-	function submitCommandIfKeyIsEnter(event: KeyboardEvent) {
-		if (event.key !== 'Enter') return event.stopPropagation()
-		submitCommand()
+	function editCommand() {
+		io.emit('editCommand', command)
+	}
+
+	function submitCommand(event: KeyboardEvent) {
+		if (command && event.key === 'Enter') io.emit('submitCommand', command.trim())
 	}
 </script>
 
 <h3>Chat</h3>
-<div id="messages">
-	{#each messages as message, index (message)}
-		<div class="message message-{index}" transition:fade|local={{ duration: 250 }}>
-			<div class="info">{message.username || message.userId} - {distanceFromNow(message.time)}</div>
-			<div class="message-text">{message.text}</div>
-		</div>
-	{/each}
-</div>
+<div id="chat">
+	<div id="messages">
+		{#each messages as message, index (message)}
+			<div class="message message-{index}" transition:fade|local={{ duration: 250 }}>
+				<div class="info">
+					{message.username || message.userId} - {distanceFromNow(message.time)}
+				</div>
+				<div class="message-text">{message.text}</div>
+			</div>
+		{/each}
+	</div>
 
-<form action="#" on:submit|preventDefault={sendMessage}>
-	<textarea bind:value={messageText} placeholder="Chat" on:keydown|stopPropagation />
+	<textarea placeholder="Chat" bind:value={message} on:keydown|stopPropagation={messageKeydown} />
 	<div>
-		<button type="submit">send</button>
+		<button on:click={sendMessage}>send</button>
 		as
 		<input
 			type="text"
 			bind:value={username}
 			placeholder={userId}
 			on:input={updateUsername}
-			on:keydown|stopPropagation
 			class="px-2 border rounded-md"
 		/>
 	</div>
-</form>
-
-<h3>Commands</h3>
-<div id="commandQueue">
-	{#each Object.entries(commands) as [userId, command]}
-		<div class="command">{command.username || command.userId}: {command.text}</div>
-	{/each}
 </div>
 
-<form
-	action="#"
-	on:submit|preventDefault={submitCommand}
-	on:input|preventDefault={queueCommand}
-	on:keydown={submitCommandIfKeyIsEnter}
->
-	<textarea id="command" bind:value={commandText} placeholder="Command" />
-</form>
+{#each Object.values(users) as user (user.id)}
+	<p>{user.username || user.id}</p>
+{/each}
+
+<div id="command">
+	<h3>Command</h3>
+	<textarea
+		id="command"
+		placeholder=">"
+		bind:value={command}
+		on:input|preventDefault={editCommand}
+		on:keydown|stopPropagation={submitCommand}
+	/>
+</div>
 
 <style>
-	form {
+	div.chat div.command {
 		@apply w-full;
 	}
 
@@ -122,10 +138,6 @@
 
 	div.message {
 		@apply bg-sky-400 rounded-md w-80 px-4 py-2 my-2 mx-4;
-	}
-
-	div#commandQueue {
-		@apply border rounded-md h-20 w-full flex flex-col justify-end overflow-y-scroll p-2;
 	}
 
 	div.command {

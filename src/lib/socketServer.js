@@ -3,48 +3,63 @@ import { Server } from 'socket.io'
 export function configureWebsocket(server) {
 	const io = new Server(server.httpServer)
 
-	const commands = {}
+	// Game state
+	const users = {}
+	let command = ''
 
 	io.on('connection', (socket) => {
-		const userId = 'User' + Math.round(Math.random() * 999999)
-		let username = ''
+		// userState
+		let userId = 'User' + Math.round(Math.random() * 999999)
+		let username
 
-		commands[userId] = { userId, username: '', text: '' }
-		socket.emit('name', userId)
+		createUser()
 
-		console.log(`${userId} joined the game!`)
-
-		refreshCommands()
-
-		socket.on('username', updateUsername)
+		// Events
+		socket.on('updateUsername', updateUsername)
 		socket.on('message', broadcastMessage)
-		socket.on('queueCommand', queueCommand)
+		socket.on('editCommand', editCommand)
+		socket.on('submitCommand', submitCommand)
 		socket.on('disconnect', leaveGame)
+
+		function createUser() {
+			userId = 'User' + Math.round(Math.random() * 999999)
+			username = ''
+
+			users[userId] = { id: userId, username }
+			socket.emit('issueId', userId)
+			console.log(`${userId} joined the game!`)
+			updateUsers()
+		}
 
 		function updateUsername(newUsername) {
 			username = newUsername
-			commands[userId].username = newUsername
-			refreshCommands()
+			users[userId].username = newUsername
+			updateUsers()
 		}
 
-		function refreshCommands() {
-			io.emit('commands', commands)
+		function updateUsers() {
+			io.emit('updateUsers', users)
+		}
+
+		function editCommand(newCommand) {
+			command = newCommand
+			io.emit('updateCommand', command)
+		}
+
+		function submitCommand(submittedCommand) {
+			command = submittedCommand
+			io.emit('submitCommand', command)
+			editCommand('')
 		}
 
 		function broadcastMessage(message) {
 			username = message.username || ''
-
 			io.emit('message', { userId, username, time: new Date(), text: message.text })
 		}
 
-		function queueCommand(command) {
-			commands[userId] = { userId, username, text: command.text }
-			refreshCommands()
-		}
-
 		function leaveGame(reason) {
-			delete commands[userId]
-			refreshCommands()
+			delete users[userId]
+			updateUsers()
 			console.log(`${username} left the game: ${reason}`)
 		}
 	})
