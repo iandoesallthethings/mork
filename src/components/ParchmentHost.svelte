@@ -1,10 +1,16 @@
 <script lang="ts">
 	import '../web/web.css'
-
-	// Input class: Input LineInput
+	import debouncedEvent from '$lib/debouncedEvent'
+	import io from '$lib/socketClient'
 	// https://ifarchive.org/if-archive/games/competition2011/zcode/andromeda/Andromeda%20Awakening.zblorb
 	// https://eblong.com/infocom/gamefiles/zork1-r119-s880429.z3
 	// https://ifarchive.org/if-archive/infocom/demos/minizork.z3
+
+	let gameWindow: HTMLDivElement
+
+	function onDomUpdate() {
+		io.emit('gameUpdate', gameWindow.innerHTML)
+	}
 </script>
 
 <div id="gameport">
@@ -23,7 +29,12 @@
 		<noscript><p>Parchment requires Javascript. Please enable it in your browser.</p></noscript>
 	</div>
 
-	<div id="windowport" />
+	<div
+		id="windowport"
+		bind:this={gameWindow}
+		use:debouncedEvent={{ eventType: 'DOMSubtreeModified', debounceTime: 375 }}
+		on:debounced-DOMSubtreeModified={onDomUpdate}
+	/>
 
 	<div id="loadingpane" style="display:none;">
 		<img src="/web/waiting.gif" alt="LOADING" /><br />

@@ -4,6 +4,7 @@
 	import io from '$lib/socketClient'
 	import { fade } from 'svelte/transition'
 	import { distanceFromNow } from '$lib/timeString'
+	import debouncedEvent from '$lib/debouncedEvent'
 
 	let userId = ''
 	let username = ''
@@ -35,19 +36,34 @@
 		})
 
 		io.on('submitCommand', (submittedCommand) => {
+			console.debug('response from socket')
 			injectCommandToGame(submittedCommand)
+			console.debug('command injected - hitting enter')
 			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+			console.debug('hit enter')
 		})
 	})
 
+	function startTyping() {
+		io.emit('isTyping', true)
+	}
+
+	function stopTyping() {
+		io.emit('isTyping', false)
+	}
+
 	function messageKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter' && !event.shiftKey) sendMessage()
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault()
+			sendMessage()
+		} else if (!users[userId].isTyping) startTyping()
 	}
 
 	function sendMessage() {
 		message = message.trim()
 		if (!message) return
 
+		stopTyping()
 		io.emit('message', { username, text: message })
 		message = ''
 	}
@@ -67,8 +83,12 @@
 		io.emit('editCommand', command)
 	}
 
-	function submitCommand(event: KeyboardEvent) {
-		if (command && event.key === 'Enter') io.emit('submitCommand', command.trim())
+	function submitCommandIfEnter(event: KeyboardEvent) {
+		console.debug('submit hit')
+		if (command && event.key === 'Enter') {
+			console.debug('it was enter')
+			io.emit('submitCommand', command.trim())
+		}
 	}
 </script>
 
@@ -76,7 +96,11 @@
 <div id="chat">
 	<div id="messages">
 		{#each messages as message, index (message)}
-			<div class="message message-{index}" transition:fade|local={{ duration: 250 }}>
+			<div
+				class="message message-{index}"
+				class:current-user={message.userId === userId}
+				transition:fade|local={{ duration: 250 }}
+			>
 				<div class="info">
 					{message.username || message.userId} - {distanceFromNow(message.time)}
 				</div>
@@ -85,7 +109,13 @@
 		{/each}
 	</div>
 
-	<textarea placeholder="Chat" bind:value={message} on:keydown|stopPropagation={messageKeydown} />
+	<textarea
+		placeholder="Chat"
+		bind:value={message}
+		use:debouncedEvent={{ eventType: 'input', debounceTime: 375 }}
+		on:debounced-input={stopTyping}
+		on:keydown|stopPropagation={messageKeydown}
+	/>
 	<div>
 		<button on:click={sendMessage}>send</button>
 		as
@@ -100,7 +130,14 @@
 </div>
 
 {#each Object.values(users) as user (user.id)}
-	<p>{user.username || user.id}</p>
+	<p class="flex space-x-2 justify-end">
+		<span>
+			{user.username || user.id}
+		</span>
+		<span class="w-4">
+			{#if user.isTyping}💭{/if}
+		</span>
+	</p>
 {/each}
 
 <div id="command">
@@ -110,12 +147,13 @@
 		placeholder=">"
 		bind:value={command}
 		on:input|preventDefault={editCommand}
-		on:keydown|stopPropagation={submitCommand}
+		on:keydown|stopPropagation={submitCommandIfEnter}
 	/>
 </div>
 
 <style>
-	div.chat div.command {
+	#chat,
+	#command {
 		@apply w-full;
 	}
 
@@ -125,22 +163,30 @@
 	}
 
 	textarea {
-		@apply border my-2 w-full h-12 rounded-md p-2;
+		@apply border my-2 w-full rounded-md p-2;
+	}
+
+	textarea#command {
+		@apply h-12;
+	}
+	textarea#message {
+		@apply h-20;
 	}
 
 	textarea#command::before {
 		content: '>';
 	}
 
-	div#messages {
-		@apply border rounded-md h-44 w-full flex flex-col justify-end overflow-y-scroll py-2;
+	#messages {
+		@apply border rounded-md h-44 w-full max-w-full flex flex-col justify-end overflow-y-scroll p-2;
 	}
 
-	div.message {
-		@apply bg-sky-400 rounded-md w-80 px-4 py-2 my-2 mx-4;
+	.message {
+		@apply bg-sky-400 rounded-md max-w-full px-4 py-2 my-2 mx-4 self-start;
 	}
 
-	div.command {
+	.message.current-user {
+		@apply self-end bg-red-400;
 	}
 
 	.info {

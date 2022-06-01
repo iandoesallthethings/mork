@@ -10,6 +10,7 @@
 
 <style>
 	main {
+		@apply max-h-screen;
 	}
 
 	@font-face {

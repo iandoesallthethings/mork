@@ -4,6 +4,7 @@ export type Username = string
 export interface User {
 	id: UserId
 	username: Username
+	isTyping: boolean
 }
 
 export interface Message {
@@ -21,3 +22,5 @@ export interface Command {
 export interface CommandQueue {
 	[key: UserId]: Command
 }
+
+export type HtmlString = string

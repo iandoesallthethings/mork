@@ -1,15 +1,24 @@
 import { Server } from 'socket.io'
 
+function randomRange(min, max) {
+	return Math.random() * (max - min) + min
+}
+
+function randomInt(min, max) {
+	return Math.floor(randomRange(min, max))
+}
+
 export function configureWebsocket(server) {
 	const io = new Server(server.httpServer)
 
 	// Game state
 	const users = {}
 	let command = ''
+	let gameHtml = ''
 
 	io.on('connection', (socket) => {
 		// userState
-		let userId = 'User' + Math.round(Math.random() * 999999)
+		let userId
 		let username
 
 		createUser()
@@ -20,12 +29,14 @@ export function configureWebsocket(server) {
 		socket.on('editCommand', editCommand)
 		socket.on('submitCommand', submitCommand)
 		socket.on('disconnect', leaveGame)
+		socket.on('isTyping', isTyping)
+		socket.on('gameUpdate', updateGame)
 
 		function createUser() {
-			userId = 'User' + Math.round(Math.random() * 999999)
+			userId = 'User' + randomInt(100, 999)
 			username = ''
 
-			users[userId] = { id: userId, username }
+			users[userId] = { id: userId, username, isTyping: false }
 			socket.emit('issueId', userId)
 			console.log(`${userId} joined the game!`)
 			updateUsers()
@@ -52,9 +63,19 @@ export function configureWebsocket(server) {
 			editCommand('')
 		}
 
+		function isTyping(userIsTyping) {
+			users[userId].isTyping = userIsTyping
+			updateUsers()
+		}
+
 		function broadcastMessage(message) {
 			username = message.username || ''
 			io.emit('message', { userId, username, time: new Date(), text: message.text })
+		}
+
+		function updateGame(newGameHtml) {
+			gameHtml = newGameHtml
+			io.emit('updateGame', gameHtml)
 		}
 
 		function leaveGame(reason) {

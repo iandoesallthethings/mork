@@ -1,15 +1,8 @@
-<script lang="ts">
-	import Parchment from '$components/Parchment.svelte'
-	import Multiplayer from '$components/Multiplayer.svelte'
-</script>
-
-<div id="columns" class="flex flex-row w-screen space-x-4 px-4">
-	<div><Parchment /></div>
-	<div><Multiplayer /></div>
-</div>
+<a href="/host">Host a game</a>
+<a href="/join">Join a game</a>
 
 <style>
-	div {
-		@apply w-full;
+	a {
+		@apply bg-blue-300 py-2 px-4 rounded-md m-5;
 	}
 </style>

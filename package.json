@@ -49,6 +49,7 @@
 		"esbuild": "^0.14.39",
 		"jquery": "^3.6.0",
 		"lodash-es": "^4.17.21",
+		"lodash.debounce": "^4.0.8",
 		"socket.io": "^4.5.1",
 		"socket.io-client": "^4.5.1",
 		"ts-node": "^10.8.0"
