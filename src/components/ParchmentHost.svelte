@@ -48,4 +48,8 @@
 	input {
 		@apply border rounded-md;
 	}
+
+	#gameport {
+		@apply max-h-full h-full pb-20;
+	}
 </style>

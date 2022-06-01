@@ -36,13 +36,13 @@
 		})
 
 		io.on('submitCommand', (submittedCommand) => {
-			console.debug('response from socket')
-			injectCommandToGame(submittedCommand)
-			console.debug('command injected - hitting enter')
+			command = submittedCommand.trim()
+			injectCommandToGame(command)
+			console.debug('dispaching')
 			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
-			console.debug('hit enter')
 		})
 	})
+	let dummyElement: HTMLDivElement
 
 	function startTyping() {
 		io.emit('isTyping', true)
@@ -84,13 +84,14 @@
 	}
 
 	function submitCommandIfEnter(event: KeyboardEvent) {
-		console.debug('submit hit')
 		if (command && event.key === 'Enter') {
-			console.debug('it was enter')
+			event.preventDefault()
 			io.emit('submitCommand', command.trim())
 		}
 	}
 </script>
+
+<div bind:this={dummyElement} />
 
 <h3>Chat</h3>
 <div id="chat">
@@ -124,6 +125,7 @@
 			bind:value={username}
 			placeholder={userId}
 			on:input={updateUsername}
+			on:keydown|stopPropagation
 			class="px-2 border rounded-md"
 		/>
 	</div>

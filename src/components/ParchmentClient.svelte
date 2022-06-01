@@ -7,8 +7,14 @@
 
 	let gameHtml: HtmlString = ''
 
+	function scrollWindowToBottom() {
+		const bufferWindow = document.querySelector('.BufferWindowInner')
+		if (bufferWindow) bufferWindow.scrollTop = bufferWindow.scrollHeight
+	}
+
 	function updateGameWindow(newHtml: HtmlString) {
 		gameHtml = newHtml
+		scrollWindowToBottom()
 	}
 
 	onMount(() => {
@@ -27,5 +33,9 @@
 <style>
 	input {
 		@apply border rounded-md;
+	}
+
+	#gameport {
+		@apply max-h-full h-full;
 	}
 </style>
